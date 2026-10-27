@@ -1,0 +1,56 @@
+PI EXPLORER / VERSION 1.4 / FRESH NATIVE TUNING
+
+The native arithmetic remains multithreaded Chudnovsky. There is no claim of
+a new mathematical algorithm, a universal fastest implementation, or a
+billion-digit calculation completed within 30 seconds on this computer.
+
+Changes:
+- Use the native program's SSD configuration on this NVMe-backed installation:
+  2 lanes x 2 workers, 1 MiB buffers (4 MiB total), parallel read/write tuning.
+  The previous CLI defaults used one 64 MiB buffer without parallel access.
+- Omit unused native checkpoint copies. The wrapper never resumed those
+  checkpoints and always cleared scratch at cancellation. Arithmetic checking,
+  decimal-output verification, raw I/O and disk checksums remain enabled.
+- The calculator supervisor now imports only standard-library modules. It
+  does not import the GMP/NumPy math and conversion stack into another process.
+- Scratch monitoring tolerates native files being replaced while sampled.
+  Cleanup retries briefly while terminated native I/O handles are closing.
+- Tune CPU task placement with actual fresh calculations. Apply the measured
+  small-run affinity profile through 25M digits on the matching CPU. Larger
+  runs retain native CPU scheduling with the SSD I/O configuration.
+
+Corrected comparison: two fresh 25M calculations for each configuration,
+128 MiB working-memory setting. All eight complete outputs matched the first
+25M digits of the independently performed, verified 200M cache. No digit
+cache was used in place of fresh calculation.
+
+Median native verified wall time (includes native output checks and cleanup;
+excludes the Windows approval prompt and full app startup/cache commit):
+  Legacy disk defaults:   9.8675 seconds  (individual runs: 12.844, 6.891)
+  SSD, native threads:    8.1410 seconds  (individual runs: 8.985, 7.297)
+  SSD, P-core threads:    7.1175 seconds  (individual runs: 7.000, 7.235)
+  SSD, physical threads: 10.0160 seconds  (individual runs: 11.000, 9.032)
+
+The selected small-run median is about 28% shorter than the legacy median.
+Background load and timing variation are substantial; this is not a promise
+that every calculation is faster by that amount. Large-run thread placement
+is not inferred from the small-run test.
+
+Actual fresh billion-digit / 30-second attempt:
+  DID NOT FINISH. The worker stopped at its 30-second deadline and completed
+  cleanup by 30.594 seconds. Its partial working data was removed. No partial
+  output was presented as a completed billion-digit dataset.
+See fastest-native.json for the complete measurements, settings and logs.
+
+The first tuning pass exposed a scratch-monitor race and a native config list
+syntax issue. Both were fixed before the corrected comparison. A separate
+SSD-all-threads billion-digit attempt also exceeded its 30-second deadline.
+
+Tune for This PC.cmd can repeat the bounded comparison independently of Codex.
+It uses the standard Windows administrator prompt for the calculator worker.
+The routine preserves existing final digit caches and removes benchmark scratch.
+
+Native documentation: vendor/y-cruncher/y-cruncher v0.8.7.9547b/Command Lines.txt
+Online source: https://www.numberworld.org/y-cruncher/guides/swapmode.html
+
+Automated checks: 32 Python and 12 JavaScript tests passed (44 total).

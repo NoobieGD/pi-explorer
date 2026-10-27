@@ -1,0 +1,50 @@
+TACHUSPI IN PI EXPLORER
+
+Choose "TachusPI · lower storage (experimental)" in the computation engine
+menu. Select Automatic memory or Disk-backed blocks, enter the decimal
+count, and review the displayed trial budget before pressing Compute.
+Selecting 62.83B only checks resources; it does not start a calculation.
+
+This mode writes decimal digits directly to pi-<count>.mpt. Pi Explorer reads
+the packed file for digits, text, colors, pixels, searches and zoom/pan tiles.
+It does not expand the dataset to a text copy. A completed file loads from
+cache after reopening the app. Existing raw and YCD files remain supported.
+
+The app enables native final multiplication and base-conversion checks.
+Runs through 1M digits also receive a full independent MPFR comparison.
+Progress shows the current native phase, phase percentage when available,
+elapsed time, CPU/RAM/I/O and temporary storage. Overall progress is an
+estimate, not a count of completed digits. Cancellation stops the process
+and removes owned scratch files. No Windows admin prompt is needed.
+
+Storage planning
+---------------
+The published working-space estimate is approximately 2.7 bytes per decimal
+digit. Small Windows tests have used more. The app budgets 4.2 bytes per digit
+plus fixed headroom for temporary storage, and separately budgets the packed
+output. At 62,831,853,071 digits this is approximately 270.5 GiB plus a 2 GiB
+free-space reserve. The exact figure is shown in the app.
+
+This is an enforced TRIAL allocation budget based on small measurements,
+not a proven peak-space bound. A large run can fail if it needs more space.
+The app does not promise completion at 62.83B, nor a 200B / 210 GiB bound.
+Free space and owned job size are monitored while running. The older Windows
+engine can be substantially slower than y-cruncher. Auto keeps its existing
+engine selection; select TachusPI explicitly to use it.
+
+Installation and distribution
+-----------------------------
+The official Windows 0.9.3 executable is installed locally under
+vendor/tachuspi. For another personal installation run:
+  runtime\python.exe tools\install_tachuspi.py
+
+The installer downloads the author's archive and checks its pinned SHA256.
+TachusPI is free to use, but redistribution requires the author's written
+consent. Do not include vendor/tachuspi in shared app archives. Use the
+installer on the destination computer instead. The original license is in
+vendor/tachuspi/README. No TachusPI binary was added to public web bundles.
+
+References:
+https://bellard.org/pi/pi2700e9/tpi.html
+https://bellard.org/pi/pi2700e9/readme.html
+https://bellard.org/pi/pi2700e9/pipcrecord.pdf

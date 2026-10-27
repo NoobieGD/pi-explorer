@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080a10"><title>Pi Explorer — A universe in a number</title><link rel="icon" href="pi-explorer.ico"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="live.css"></head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="pi-logo">π</span><div><h1>PI EXPLORER<span class="version"> / 01</span></h1><p>A universe in a number.</p></div></div>
+  <div class="engine-pill"><i class="status-dot"></i><span id="engineLabel">NATIVE PRECISION ENGINE</span></div>
+  <div class="header-actions"><button id="soundBtn" class="icon-button" title="Toggle sound effects" aria-label="Toggle sound effects">♪</button><button id="focusBtn" class="icon-button" title="Focus canvas · F" aria-label="Focus canvas">⛶</button><button id="helpBtn" class="text-button">Field guide <span>↗</span></button></div>
+</header>
+<main>
+<aside class="sidebar" id="sidebar">
+ <section class="compute-section" id="generateSection">
+  <div class="eyebrow"><button id="toggleGenerate" aria-expanded="true" title="Expand or collapse computation controls">01 / GENERATE <span>⌃</span></button><span class="tiny-badge">LOCAL</span></div>
+  <label for="digitCount">Decimal places</label>
+  <div class="count-field"><input id="digitCount" type="text" inputmode="numeric" aria-label="Decimal places" value="5000000" autocomplete="off" spellcheck="false"><span>digits</span></div>
+  <div class="presets" id="countPresets"><button data-count="100000">100K</button><button data-count="1000000">1M</button><button data-count="5000000" class="active">5M</button><button data-count="10000000">10M</button><button data-count="100000000">100M</button><button data-count="1000000000">1B</button><button data-count="10000000000">10B</button><button data-count="62831853071">62.83B</button><button data-count="100000000000">100B</button><button data-count="200000000000">200B</button><button data-count="1000000000000">1T</button></div>
+  <select id="engineSelect" aria-label="Computation engine"><option value="auto">Auto · fastest available native engine</option><option value="ycruncher">y-cruncher · parallel CPU acceleration</option><option value="ycruncher-low">Reduced disk · Chudnovsky + packed YCD</option><option value="tachuspi">TachusPI · lower storage (experimental)</option><option value="chudnovsky">Chudnovsky · native GMP</option><option value="mpfr">MPFR · independent comparison</option><option value="compact">Compact exact · experimental (RAM)</option></select>
+  <div id="compactVerification" class="compact-verification" hidden><p>Compact stores its working numbers in RAM. Use Auto for disk-backed calculations when RAM is limited.</p><button id="compactAutoBtn" type="button">Use RAM-aware Auto</button><button id="compactCheckBtn" type="button">Check 200B / 210 GiB without computing</button><p id="compactCheckResult" role="status">The 200B / 210 GiB target is not verified.</p></div>
+  <label class="check-label"><input id="forceCompute" type="checkbox"> Fresh calculation (ignore cached digits)</label>
+  <div id="memoryControls" class="memory-controls"><label for="memoryMode">Memory strategy</label><select id="memoryMode"><option value="auto">Automatic · adapt to free RAM</option><option value="disk">Disk-backed blocks · low RAM</option><option value="ram">RAM only · fastest when it fits</option></select><p id="resourcePlan" class="resource-plan" role="status">Checking RAM and disk space…</p></div>
+  <button id="computeBtn" class="primary-button" disabled><span>Calculate π</span><span>↗</span></button>
+  <div class="compute-status"><span id="computeMessage">Ready to explore</span><span id="computeTime">—</span></div><div class="progress-track"><div id="computeProgress"></div></div>
+  <div id="computeLive" class="compute-live" hidden><div class="live-top"><span id="liveBadge">STARTING</span><strong id="phasePercent">Working…</strong></div><p id="phaseDetail">Waiting for calculator</p><div class="live-metrics"><div><span>CPU</span><b id="cpuMetric">—</b></div><div><span>RAM</span><b id="ramMetric">—</b></div><div><span>READ</span><b id="readMetric">—</b></div><div><span>WRITE</span><b id="writeMetric">—</b></div></div><div class="activity-label">CPU ACTIVITY <span>LAST 45s</span></div><svg viewBox="0 0 220 36" role="img" aria-label="Native CPU activity over the last 45 seconds"><path class="activity-grid" d="M0 4H220 M0 19H220 M0 34H220"/><path id="cpuTrace" d=""/></svg><p class="live-note">Phase percentage is shown when available. Read/write values are calculator I/O requests.</p></div>
+ </section>
+ <section class="search-section">
+  <div class="eyebrow"><span>02 / DISCOVER</span><span>⌕</span></div>
+  <div class="search-tabs" role="tablist" aria-label="Search type"><button role="tab" aria-selected="true" data-search="digits" class="active">Digits</button><button role="tab" aria-selected="false" data-search="text">Text</button><button role="tab" aria-selected="false" data-search="shape">Shape</button></div>
+  <div id="queryPanel"><label id="queryLabel" for="queryInput">Find a sequence</label><div class="query-wrap"><input id="queryInput" value="12345" placeholder="e.g. 12345" autocomplete="off" spellcheck="false"><span>↵</span></div><p id="encodingHint" class="muted-hint">Every match. Every position. Real digits.</p></div>
+  <div id="shapePanel" hidden>
+   <div class="shape-top"><label>Draw a pattern</label><select id="shapeSize" aria-label="Shape grid size"><option value="4">4 × 4</option><option value="5">5 × 5</option><option value="6" selected>6 × 6</option><option value="8">8 × 8</option><option value="12">12 × 12</option><option value="16">16 × 16</option></select></div>
+   <div id="shapeGrid" class="shape-grid" aria-label="Pixel pattern editor"></div>
+   <div class="shape-tools"><button data-pattern="pi" title="Pi symbol">π</button><button data-pattern="heart" title="Heart">♡</button><button data-pattern="smile" title="Smiley">☺</button><button data-pattern="checker" title="Checkerboard">▦</button><button data-pattern="square" title="Filled square">■</button><button id="clearShape" title="Clear pattern">⌫</button></div>
+   <div class="shape-options"><label class="check-label"><input id="cropShape" type="checkbox" checked> Crop empty border</label><label class="check-label"><input id="sweepWidth" type="checkbox" checked> Try multiple row widths</label><div id="sweepRange" class="range-pair"><input id="minWidth" aria-label="Minimum row width" type="number" value="6" min="1" max="1024"><span>through</span><input id="maxWidth" aria-label="Maximum row width" type="number" value="320" min="1" max="1024"></div></div>
+   <label class="upload-image" for="imageInput">↥ Import image as pixels<input id="imageInput" type="file" accept="image/*" hidden></label>
+  </div>
+  <div id="textOptions" hidden><select id="textScheme" aria-label="Text encoding"><option value="mod26">Pairs modulo 26 · 00 → A</option><option value="a1z26">A1Z26 · 01 → A, others → .</option><option value="ascii">ASCII · three digits per character</option></select><label class="check-label"><input type="checkbox" id="pairOffset"> Shift pairing by one digit</label></div>
+  <button id="searchBtn" class="search-button" disabled><span>Search in π</span><span>⌕</span></button>
+  <p id="probability" class="probability"></p>
+ </section>
+ <section class="results-section">
+  <div class="eyebrow"><span id="resultHeading">EXPLORER’S NOTEBOOK</span><span id="resultCount">00</span></div>
+  <div id="results" class="results"><div class="empty-results"><div class="orbit-icon">⌕</div><p>What are you looking for?</p><span>Your next discovery is a search away.</span></div></div>
+ </section>
+ <div class="sidebar-bottom"><button id="importBtn">↥ Import digits</button><button id="exportBtn">↧ Export π</button><input id="importInput" type="file" accept=".txt,.csv" hidden></div>
+</aside>
+<section class="workspace">
+ <div class="workspace-toolbar">
+  <div class="view-switch" role="tablist" aria-label="Visualization"><button role="tab" data-view="digits" aria-selected="true" class="active"><span>01</span> Digits</button><button role="tab" data-view="text" aria-selected="false"><span>Aa</span> Letters</button><button role="tab" data-view="colors" aria-selected="false"><span>▦</span> Color</button><button role="tab" data-view="binary" aria-selected="false"><span>◧</span> Pixels</button></div>
+  <div class="row-width"><label for="rowWidth">ROW WIDTH</label><input id="rowWidth" type="number" min="4" max="4096" value="200"><span>↔</span></div>
+ </div>
+ <div class="canvas-area" id="canvasArea">
+  <canvas id="piCanvas" aria-label="Zoomable pi digit canvas. Drag to pan, scroll to zoom, double-click to inspect." tabindex="0"></canvas>
+  <div class="canvas-heading"><div class="eyebrow">THE INFINITE CANVAS</div><h2 id="canvasTitle">Look closer.</h2><p id="canvasSubtitle">5,000,000 digits. Countless possibilities.</p></div>
+  <div class="canvas-corner"><i></i> <span id="canvasMode">DECIMAL / BASE 10</span></div>
+  <div id="lodLabel" class="lod-label" aria-live="polite">FULL GLYPHS</div>
+  <div id="canvasEmpty" class="canvas-empty" hidden><span>π</span><p>Begin with a number.<br>Discover an entire world.</p><button id="emptyCompute" class="primary-button">Calculate 5 million digits ↗</button></div>
+  <div class="zoom-controls"><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomReset" title="Fit width · 0"><span id="zoomLabel">100%</span></button><button id="zoomIn" aria-label="Zoom in">+</button><span></span><button id="goHome" title="Return to first digit · Home" aria-label="Return to first digit">⌂</button></div>
+  <div class="canvas-help">DRAG TO PAN<span>·</span>SCROLL TO ZOOM<span>·</span>DOUBLE CLICK TO INSPECT</div>
+  <div id="hoverCard" class="hover-card" hidden></div>
+  <div id="searchOverlay" class="search-overlay" hidden><div class="spinner"></div><span id="searchMessage">Searching the digits…</span><button id="cancelSearch">Cancel</button></div>
+ </div>
+ <div class="navigator"><div class="navigator-label"><span>3.</span><span id="navPosition">DIGIT 1</span></div><input id="positionSlider" type="range" value="0" min="0" max="1000000" aria-label="Navigate pi digits"><span id="navEnd">∞</span><div class="jump-wrap"><input id="jumpInput" type="text" placeholder="Go to digit…" aria-label="Go to digit"><button id="jumpBtn" aria-label="Jump to position">↗</button></div></div>
+ <div class="insight-bar"><div class="insight-left"><span class="live-dot"></span><strong id="loadedCount">0</strong><span>decimal places</span><span class="divider">/</span><span id="loadedMethod">Native GMP</span></div><div><button id="statsBtn">Distribution <span>▥</span></button><button id="bookmarkBtn" title="Save current view">Bookmark <span>⌑</span></button><button id="captureBtn" title="Export canvas PNG">Capture <span>↗</span></button></div></div>
+</section>
+</main>
+<footer><span>π IS IRRATIONAL. YOUR CURIOSITY ISN’T.</span><div id="paletteLegend"></div><span id="footerStatus">COMPUTED LOCALLY · EXPLORED ENDLESSLY</span></footer>
+<div id="toast" role="status"></div>
+<dialog id="guideDialog"><button class="dialog-close" aria-label="Close guide">×</button><div class="eyebrow">A FIELD GUIDE TO THE INFINITE</div><h2>Everything starts<br>with 3.14159…</h2><p>Accelerated by <a href="https://www.numberworld.org/y-cruncher/" target="_blank" rel="noopener">y-cruncher by Alexander J. Yee</a>. Inspired by <a href="https://www.youtube.com/watch?v=wxBWOvELdgk" target="_blank" rel="noopener">Nateate’s Pi Explorer video ↗</a>. Compute real decimal places, then reinterpret the same digits as text, color, or pixels.</p><div class="guide-grid"><article><b>01 / GENERATE</b><p>Automatic measures free RAM before a run. Calculations that fit use RAM; larger ones process bounded arithmetic blocks through temporary disk files. Windows asks to approve only the calculator worker for disk mode. Scratch files are cleared after use, and the new dataset appears after the complete output is verified. Newly generated caches share a 2 GiB budget; imported files and the active dataset are protected.</p></article><article><b>02 / REINTERPRET</b><p>Letters: pair digits, take modulo 26, map 0–25 to A–Z. Zoom blends full glyphs, fine glyphs, microglyphs, then row coverage; these levels use the actual font shapes. Color: one digit, one color. Pixels: 0–4 black, 5–9 white; or select odd/even below.</p></article><article><b>03 / FIND A SHAPE</b><p>Click or drag in the pixel editor. All black and white cells inside the cropped bounds must match. Width sweep rearranges the same stream at every selected width. Native bitset intersections search millions of candidate starts at once.</p></article><article><b>04 / STAY CURIOUS</b><p>π is infinite and nonperiodic. Whether it is normal—and contains every finite digit sequence—is unproved. Estimated odds assume independent uniform digits; a finite search cannot prove or disprove that conjecture.</p></article></div><div class="guide-bottom"><label>PIXEL MAPPING<select id="pixelRule"><option value="threshold">0–4 black · 5–9 white</option><option value="parity">Even black · odd white</option></select></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="100" value="24"></label></div><p class="shortcut-note">Scroll: zoom at cursor · Drag: pan · Shift+scroll: vertical travel · F: focus mode · 0: fit width · Home: beginning · Esc: close · Enter: search</p><button id="quitBtn" class="text-button">Quit local engine</button></dialog>
+<dialog id="statsDialog"><button class="dialog-close" aria-label="Close statistics">×</button><div class="eyebrow">THE SHAPE OF THE DATA</div><h2>Order in the noise.</h2><p>Digit distribution across your computed decimal places.</p><div id="statsContent"></div></dialog>
+<script src="viewport.js"></script>
+<script src="compute-live.js"></script>
+<script src="app.js"></script>
+</body></html>

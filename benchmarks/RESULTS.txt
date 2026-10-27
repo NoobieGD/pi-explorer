@@ -1,0 +1,44 @@
+PI EXPLORER / PERFORMANCE VALIDATION
+Intel Core 3 100U, 8 GB installed RAM. Timings depend strongly on current load.
+
+Measured conversion improvements:
+Whole 5,000,000 digits -> letters: 0.7787 s before, 0.02107 s after (about 37x).
+Visible 14,000-character text tile: median 0.000146 s native conversion.
+Visible color tile: median 0.0000088 s native gather.
+Visible monochrome tile: median 0.0000594 s native conversion.
+Complete localhost requests for these tiles: approximately 3.5-4.3 ms.
+Opening the 60M-digit memory map: median 0.000207 s; the file is not copied to RAM.
+These tile timings convert the visible sample, not a full billion-digit dataset.
+
+Native computation (fresh runs, output verification enabled):
+25 million: 3.85 s in the native-file pipeline; 2.331 s arithmetic/conversion.
+60 million, normal-priority native-file pipeline: 9.02 s; 7.635 s arithmetic.
+60 million through the full app with GUI/background load: 32.44 s to ready;
+  27.497 s native arithmetic/conversion, 31.412 s worker/verification/cache commit.
+An earlier below-normal-priority run under load took 68.13 s to ready.
+Normal priority is local to the native process; no OS power/security settings changed.
+No verification was disabled, and no cached load was counted as a fresh computation.
+
+Billion-digit target:
+NOT VERIFIED / NOT ACHIEVED DURING THIS SESSION.
+The actual native 1B configuration reported 4.54 GiB of working memory and
+insufficient available physical RAM. Windows reported roughly 0.8-0.9 GiB free.
+The app checks headroom instead of forcing Windows into heavy paging.
+Freeing RAM is necessary for this configuration, but does not guarantee <60 s;
+CPU throughput, cooling, and other workloads still determine the result.
+
+Benchmark 1 Billion.cmd can run without Codex, performs a NEW calculation even
+if a matching cache exists, includes verification and cache commit, and records
+both elapsed time and whether it actually meets 60 seconds. It defaults to a
+10-minute maximum so a slow run can finish rather than be reported as a success.
+
+Native files can retain their "3." prefix; the memory-mapped store normalizes
+that offset. Only chunk-sized temporaries are used by conversion/search/export.
+The standalone HTML shares the faster sampled-tile/raster renderer. Its browser
+computation limit remains 1 million new digits; it includes 5 million digits.
+
+Validation: 21 Python tests and 10 JavaScript tests passed. Coverage includes
+independent precision, native/raw file formats, streamed search overlaps, row
+alignment across shape chunks, tail-safe sampled tiles, streamed SHA-256/counts,
+session recovery, progress-file locks, and billion-position viewport coordinates.
+See performance.json, http-tiles.json and cold-60m-normal.json for raw records.

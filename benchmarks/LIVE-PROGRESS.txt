@@ -1,0 +1,40 @@
+PI EXPLORER / LIVE PROGRESS VALIDATION / VERSION 1.5
+
+Actual fresh 50-million-digit RAM computation, output compared in bounded
+chunks against the corresponding prefix of the saved billion-digit dataset.
+All 50 million digits matched. The prior billion-digit view was restored
+from cache after validation; that restore was not counted as computation.
+
+Latest live API validation:
+  142 unique native snapshots observed.
+  95th-percentile snapshot age at API receipt: 0.277 seconds.
+  Median localhost status request: 0.051 seconds under the current load.
+  Native phases observed: prepare, series, divide, sqrt, multiply, convert,
+    write, base_verify, output_verify, complete.
+  Native summation percentages, nonzero CPU and resident memory were observed.
+  The GUI was inspected during real summation and displayed phase percentage,
+    elapsed phase time, CPU, resident RAM, I/O rates and CPU history.
+  Screenshot: reference/Live Progress Preview.png
+
+The GUI polls every 200 ms while busy; worker snapshots are published every
+250 ms. Actual scheduling varies. Unquantified phases animate an activity
+bar instead of displaying a fabricated completion percentage.
+
+Performance work: incremental stream parsing, bounded 128 KiB diagnostic tail,
+no repeated whole-log reads by both workers, no repeated unchanged worker
+progress writes, direct telemetry reads, cached process handles, and coalesced
+GUI status calls. Native file verification and disk safeguards remain enabled.
+
+The two validation runs took 31.72 s and 47.12 s under different background
+loads. No new arithmetic speedup is inferred from them. The latest supervisor
+used 2.23 CPU-seconds during the run, less than 1% of the machine's aggregate
+CPU capacity over its native wall time. This includes supervision and cleanup,
+not only the telemetry sampler. See the raw metadata and live-progress.json.
+
+API counter references:
+https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getprocessiocounters
+https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getprocessmemoryinfo
+I/O counters represent process I/O requests, including OS-cached operations;
+they do not measure physical SSD bandwidth directly.
+
+Automated validation: 38 Python and 17 JavaScript tests passed (55 total).

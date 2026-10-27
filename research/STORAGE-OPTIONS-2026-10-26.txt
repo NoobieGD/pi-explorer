@@ -1,0 +1,102 @@
+STORAGE RESEARCH — 2026-10-26
+
+Scope: investigate further reductions for 62,831,853,071 decimal places.
+No 62.83B or 200B computation was started. Existing digits and production
+calculator settings were not changed. These findings do not establish a
+210 GiB bound for a 200B calculation.
+
+SAVED DIGIT FORMATS
+
+Calculated payload sizes at 62,831,853,071 digits, before file headers:
+  ASCII text:                 58.5167 GiB
+  Packed BCD, two digits/byte: 29.2584 GiB
+  YCD, 19 digits/uint64:       24.6386 GiB (already supported)
+  Large-block base conversion:24.2985 GiB plus block rounding/metadata
+
+BCD is useful compared to text but is larger than current YCD. Large-block
+packing could save approximately 0.34 GiB over YCD, not tens of GiB. The last
+figure describes direct encoding of arbitrary decimal blocks, not a universal
+lower bound for algorithmically defined constants such as pi.
+
+Three read-only 1,000,008-digit samples were taken near offsets 0, 10B and 27B.
+Each YCD payload was 421,056 bytes. zlib-9 produced 421,192 bytes; LZMA-6
+produced 421,136 bytes. Recompressing these packed digit samples increased
+their sizes. These measurements are of output digits, not native swap data.
+See benchmarks/compression-options-2026-10-26.json.
+
+Packing the existing 27,182,818,284-digit text file into YCD would save
+approximately 14.6566 GiB AFTER a verified replacement of the old text.
+Keeping both files does not save space. No conversion or deletion was done.
+The public raw-text backend would need a packed reader before replacing it.
+
+ADDITIONAL Y-CRUNCHER FORMULA PLANS, NO COMPUTATION
+
+Native menu, exact requested precision, 256 MiB working memory, hexadecimal
+digits disabled, decimal YCD enabled, output verification enabled:
+  Reduced Chudnovsky: 269 GiB working + 24.6 GiB output
+  Reduced Ramanujan:  272 GiB working + 24.6 GiB output
+  Bellard BBP:        331 GiB working + 24.6 GiB output
+  Hwang 6-term:       313 GiB working + 24.6 GiB output
+  Machin:            348 GiB working + 24.6 GiB output
+The existing reduced Chudnovsky option remains smallest among these trials.
+
+A DIFFERENT ENGINE: TACHUSPI
+
+Fabrice Bellard's disk-backed TachusPI uses prime-factor cancellation with a
+memory-efficient sieve and storage-saving large-multiplication techniques.
+Its documentation gives an approximate minimum of 2.7 bytes per decimal
+digit of working storage. At the target this is about 158 GiB. This is a
+published estimate, NOT a tested upper bound or a launch admission check.
+Keep any separately allocated output and filesystem overhead in the budget.
+
+Official Windows 0.9.3 was downloaded to a private research folder on this PC.
+No executable was added to app releases or public bundles. Download archive
+SHA256: aab1a9caebed62954b7b31186b65e86ec8722559197b9dc4e3804c4b3722d296
+
+Bounded checks, using a 32 MiB memory option and 256 MiB disk option:
+  1,000,000 decimal places: all matched the existing dataset.
+  25,000,000 decimal places: all matched; 15.227 seconds end-to-end.
+    Directory logical sizes sampled every 20 ms peaked at 100,324,228 bytes.
+    Native allocator reported a 100.30 MB disk peak. Sampling is not a bound
+    and is not physical NTFS allocation or a scaled capacity proof.
+  A separate 1M decimal packed-MPT run produced 425,984 bytes. A Python
+    decoder read every requested digit and matched it against the dataset.
+  Native final multiplication/base-conversion checks were enabled.
+See benchmarks/tachuspi-validation.json and tachuspi-binary-validation.json.
+
+This is a credible next integration candidate, not an already available app
+mode. Its Windows build lacks raw/asynchronous disk I/O, and no speed parity
+with y-cruncher is established. Its bundled Windows tpidump source also uses
+32-bit fseek; a large-file-safe reader is needed for large packed files.
+The documented storage estimate cannot be inferred from one small run alone.
+
+ALGORITHM OPTIONS BEYOND GENERIC FILE COMPRESSION
+
+1. Prime-factor cancellation using a segmented sieve, as in TachusPI. This
+   goes beyond the app's existing naive GMP-gcd prototype. Redundant factors
+   are removed before large arithmetic, rather than compressed afterward.
+2. Large multiplications split across cyclic/negacyclic moduli and combined
+   with CRT. Bellard describes lower disk use at the cost of additional I/O.
+3. Rigorous truncated binary splitting. Published analysis achieves linear
+   space, but practical constants, guard precision and an out-of-core
+   implementation still need verification. It is not implemented here.
+
+REFERENCES
+
+BCD representation:
+https://www.ibm.com/docs/en/iis/11.3.0?topic=codes-packed-decimal-conversion
+YCD representation:
+https://github.com/Mysticial/DigitViewer
+TachusPI downloads, platform limitations and documentation:
+https://bellard.org/pi/pi2700e9/tpi.html
+https://bellard.org/pi/pi2700e9/readme.html
+Arithmetic, common-factor reduction and disk-saving multiplication:
+https://bellard.org/pi/pi2700e9/pipcrecord.pdf
+Prime-factor cancellation discussion by y-cruncher's author:
+https://www.numberworld.org/y-cruncher/developments.html
+Rigorous truncated binary splitting:
+https://arxiv.org/abs/1209.5097
+
+Conclusion: failure to fit with the bundled native presets is not proof that
+the target cannot fit with another arithmetic engine. TachusPI merits further
+integration and scale-specific validation; generic BCD does not solve it.

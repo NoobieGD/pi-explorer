@@ -1,0 +1,79 @@
+COMPACT PI RESEARCH — NOT A PRODUCTION 200B ENGINE
+
+Target: calculate 200,000,000,000 decimal places within a 210 GiB storage budget,
+at a speed comparable to the bundled y-cruncher engine. That target has NOT
+been achieved or verified. The active application still uses its existing engine.
+
+IMPLEMENTED EXPERIMENT
+compact_engine.py evaluates the Chudnovsky series using exact binary splitting.
+At a merge, g=gcd(P_left,Q_right) is removed before multiplying. Both T/Q and
+P/Q remain exactly equal to the original fractions. The unused final P product
+is omitted, including recursively unused products on rightmost branches.
+All arithmetic uses the bundled GMP. No precision truncation is performed.
+The prototype checks physical RAM before running, and does not offer disk mode.
+Tests compare exact rational identities and independent MPFR decimal output.
+
+benchmark_compact.py calculates only 100K, 500K, 1M and 5M, with three trials
+per configuration. Every output is checked against the existing billion digits.
+A fresh native 5M RAM baseline is also checked. It never calculates 200B.
+Results: benchmarks/compact-research.json. Compression inspection is timed
+separately from calculation. rootPayloadBytes describes only Q and T integer
+payloads. largestMergePayloadBytes is a diagnostic local payload estimate;
+neither metric is process RSS, native FFT workspace, or peak disk storage.
+
+THE MISSING ENGINEERING
+A 200B-digit binary value occupies approximately 77.35 GiB. Two such values
+fit under 210 GiB; three already exceed it. This is a sizing floor, not a proof
+that a two-register arithmetic implementation exists within the whole budget.
+Multiplication, division, square root and base conversion all need workspace.
+The completed text file occupies 186.26 GiB. Writing it while retaining a full
+binary input requires either destructive block reclamation or extra storage.
+Compression ratios measured on small exact numerators are close to 1.0; these
+already-binary payloads cannot be assumed to shrink 4–5x with an ordinary codec.
+
+An actual 210 GiB implementation still requires a verified out-of-core FFT/NTT
+backend, a complete allocation/lifetime schedule (including transform scratch),
+rigorous rounding control if precision truncation is introduced, and staged
+output conversion with early reclamation. No such backend is present here.
+The plan() result explicitly marks large-scale launchability as false. Its
+two-value figure must never replace the real production resource preflight.
+
+RESEARCH BASIS
+Cheng, Hanrot, Thome, Zima, Zimmermann (2007), Time- and Space-Efficient
+Evaluation of Some Hypergeometric Constants:
+https://www.cs.uleth.ca/~cheng/papers/issac2007.pdf
+Our prototype implements exact gcd cross-cancellation, not the paper's full
+prime-factor-sieve implementation or its optimized performance claim.
+
+Mezzarobba (2012), A Note on the Space Complexity of Fast D-Finite Function
+Evaluation: https://arxiv.org/abs/1209.5097
+This provides a direction for rigorous truncated binary splitting. Asymptotic
+O(p) space does not determine a practical 210 GiB bound or y-cruncher speed.
+The truncation algorithm from this paper is not implemented in the prototype.
+
+MEASURED RESULT / 2026-10-25
+At 5,000,000 digits, across three trials per variant:
+  Standard exact split:       4.296 seconds median
+  Cross-cancelled split:      5.839 seconds median
+  Final Q+T binary payload:   9,311,737 -> 5,166,629 bytes (44.51% smaller)
+  Fresh y-cruncher compute:   0.247 seconds (reported native computation)
+  Native wrapper end-to-end:  1.416 seconds, including startup and verification
+The prototype is 35.9% slower than the instrumented standard exact split at
+this size, and much slower than the native engine. Compression inspection is
+excluded from these calculation times. Both Python variants ran on a thread
+tagged HighQoS at normal priority; a pre-tuning report is retained separately.
+All generated outputs matched every digit of the existing verified dataset.
+These are small-scale measurements, not a benchmark or capacity proof at 200B.
+
+The speed requirement and the complete 210 GiB peak-storage requirement remain
+unmet. The app now offers it as "Compact exact · experimental (RAM)" for
+resource-admitted small runs, with full independent MPFR comparison before
+publication. It is not wired into Auto or offered as a working 200B calculator.
+It never substitutes an unvalidated plan for production resource checks.
+The no-run storage check returns verifiedUnderBudget=false and a null
+peakStorageUpperBoundBytes until a complete, proven allocation bound exists.
+
+RUN
+runtime/python.exe research/compact_engine.py --digits 100000
+runtime/python.exe research/compact_engine.py --plan 200000000000
+runtime/python.exe research/benchmark_compact.py

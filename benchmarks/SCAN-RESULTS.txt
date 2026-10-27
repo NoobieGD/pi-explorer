@@ -1,0 +1,56 @@
+PI EXPLORER 1.6.2 / EXISTING-DATA SCANNING
+2026-10-25 / Intel Core 3 100U / Windows / 8 logical processors
+
+No 200-billion-digit computation or file was created. All performance runs
+searched the existing verified 1,000,000,000-digit dataset.
+
+ACTUAL RUNNING DESKTOP BACKEND (five independent full queries per mode)
+                         Median seconds     Billion source digits/second
+Digits                       0.089404                  11.19
+Modulo-26 text               0.117053                   8.54
+ASCII text                   0.050806                  19.68
+
+Every timed query above was an uncapped complete scan, with cacheHit=false.
+Each query was different, so exact query-result reuse could not influence
+the full-scan timings. Text rates count source decimal digits, not characters.
+All actual returned matches were checked against the source encoding.
+Raw trials: scan-live.json. Different query text changes the cost of filtering.
+
+Exact repeat result reuse: 0.000457 / 0.000797 / 0.001377 seconds respectively.
+These are cache lookups, never presented as fresh scan throughput in the GUI.
+
+Additional cold/warm and thread-count trials:
+  scan-api.json: five complete scans per mode using an isolated HTTP server.
+  scan-speed.json: prior streaming implementation vs native, 1/2/4/6/8 threads.
+  Best complete ASCII trial in scan-speed.json: 0.038649 seconds, 25.87 billion/s.
+  Actual GUI proof: reference/Fast Scan Preview.png, full billion in 0.107s.
+
+Cold or newly mapped input is slower. New mappings and GUI runs measured
+approximately 1.0-1.6 seconds before the file's mapping was warm. CPU load,
+memory pressure, thermal state and disk caching noticeably change results.
+The measured resident-file rate cannot be extrapolated to a 200 GB disk file.
+No guarantee of scanning 200 billion digits in eight seconds is made.
+
+IMPLEMENTATION
+  - AVX2 SIMD decimal filters, exact verification, hoisted vectors, 64-bit offsets.
+  - Vector pair arithmetic for modulo-26; direct aligned encoded-byte searches
+    for ASCII and A1Z26 words; exact dot substitution retained.
+  - Bounded shared native-thread pool; no complete decoded array or digit copy.
+  - Bounded Windows prefetch for future streaming files over 2 GiB; not activated
+    for this 1 GB dataset because cached-file tests measured extra overhead.
+  - Scanner threads request HighQoS at normal priority, without changing the
+    system power plan, affinity, or global scheduling settings.
+  - Native pixel constraints, width and spatial parallelism, wildcard support.
+  - Exact 64-entry result LRU keyed by file identity and encoding parameters.
+  - Actual capped ranges, explicit cache labels, faster GUI job polling, TCP_NODELAY.
+
+VERIFICATION
+46 Python tests and 17 JavaScript tests passed. Native scalar and SIMD paths
+were compared with independent encodings across all alignments, long patterns,
+end-of-file tails, overlapping occurrences, worker boundaries, exact result
+limits, file changes, cancellation, and independent scalar pixel matches.
+Live HTTP checks covered capped digit searches, the video's PIE position,
+verified multi-width pixel results, complete scans and explicit cache reuse.
+
+The Windows native scanner accelerates the desktop edition. The rebuilt
+standalone HTML retains its independent browser engine.

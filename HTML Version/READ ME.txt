@@ -1,0 +1,29 @@
+PI EXPLORER — STANDALONE HTML
+
+Open index.html directly in a modern Edge, Chrome, Firefox, or Safari browser.
+To publish, upload index.html to any static host that permits JavaScript and
+blob Web Workers. No Python, local server, npm install, accounts, or API keys.
+The single file includes all JavaScript, CSS, font data and 5 million digits.
+
+Features: the same pan/zoom canvas, digits/text/color/pixel views, number and
+word search, variable-width shape search, image import, SFX, statistics,
+bookmarks, PNG capture, and digit-file import/export.
+
+The HTML version calculates decimal places with exact BigInt Chudnovsky in a
+Web Worker. No preset application digit ceiling is enforced. Browser memory,
+exact number representation, string capacity and storage remain real limits.
+The included 5 million can be searched immediately. Use the desktop native
+engine for large runs; the browser engine does not support disk-backed math.
+It cannot run Windows y-cruncher, GMP, or MPFR executables. Native desktop
+computation remains faster. Browser speed varies with hardware and browser.
+
+The app saves preferences and the last dataset in browser storage when that
+storage is available. Blocking storage does not block computation or search.
+Field guide / Restore bundled digits returns to the included 5 million.
+
+A host or HTML embed service must allow scripts and blob workers. Sites that
+strip scripts cannot run an interactive app. Standard static hosting works.
+
+Inspired by Nateate's video: https://www.youtube.com/watch?v=wxBWOvELdgk
+JetBrains Mono is embedded under the SIL Open Font License, included in the
+HTML source and the accompanying OFL.txt. Pi's normality remains unproved.

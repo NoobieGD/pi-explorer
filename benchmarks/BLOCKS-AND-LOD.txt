@@ -1,0 +1,34 @@
+PI EXPLORER / VERSION 1.3 VALIDATION
+
+The new disk-backed native path was actually run with one million decimal
+digits and a 128 MiB working-memory setting. Every digit matched MPFR, and
+the scratch directory was absent after completion. See disk-validation.json.
+Its 11.40-second end-to-end test included Windows approval and the independent
+comparison; native computation/conversion was 0.553 seconds.
+
+A subsequent 125-million-digit calculation in the app automatically selected
+disk mode with a 380 MiB working budget. It finished in 102.39 seconds for
+the engine, verification and cache commit (89.114 seconds native computation).
+The first 100 million digits matched the entire prior RAM-computed cache in
+bounded-memory comparisons. Its scratch directory was removed and the complete
+125M dataset became active. See disk-125m-validation.json.
+
+A non-elevated planning-only probe for one billion digits accepted a 128 MiB
+working-memory setting and reported 4.59 GiB logical disk + 954 MiB output.
+This probe intentionally could not start calculation; no billion-digit run is
+claimed here. The app reserves a conservative 10.37 GiB total cap for that job,
+monitors the job, and preserves a 2 GiB free-space reserve.
+
+Disk mode uses y-cruncher's out-of-core algorithm, not independent decimal
+chunks or repeated recalculation of prefixes. The verified final native file
+is renamed into its cache without copying a second complete digit string.
+
+Text LODs: full glyph rows, 4x7 font mipmaps, 2x4 font mipmaps, row-coverage bands.
+Smoothstep blends overlap at every boundary. Tests check that the weights are
+continuous and sum to one across the full zoom range. Real glyph coverage
+replaces the previous pseudo-random one-pixel representation of characters.
+The shared desktop/HTML renderer bounds its tile/raster history at 24 MiB.
+
+Native source: https://www.numberworld.org/y-cruncher/guides/swapmode.html
+
+Automated validation: 29 Python and 12 JavaScript tests passed (41 total).
