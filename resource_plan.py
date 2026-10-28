@@ -24,15 +24,17 @@ def gib_text(size):
     whole,fraction=divmod(size,GIB)
     return f'{whole:,}.{fraction*100//GIB:02d}'
 
-def dataset_path(folder,count,packed=False):
-    folder=Path(folder);preferred=folder/f'pi-{count}.{ "mpt" if packed=="mpt" else "ycd" if packed else "txt"}'
+def dataset_path(folder,count,packed=False,constant='pi'):
+    from constants import identify
+    constant=identify(constant)
+    folder=Path(folder);preferred=folder/f'{constant}-{count}.{ "mpt" if packed=="mpt" else "ycd" if packed else "txt"}'
     if preferred.exists() or packed:return preferred
-    alternate=folder/f'pi-{count}.ycd'
+    alternate=folder/f'{constant}-{count}.ycd'
     if alternate.exists():return alternate
-    alternate=folder/f'pi-{count}.mpt'
+    alternate=folder/f'{constant}-{count}.mpt'
     return alternate if alternate.exists() else preferred
 
-def plan(count,folder,available,method='auto',mode='auto',memory_mib=0,free=None,low_disk=False):
+def plan(count,folder,available,method='auto',mode='auto',memory_mib=0,free=None,low_disk=False,constant='pi'):
     count=digit_count(count);folder=Path(folder).resolve()
     if mode not in ('auto','ram','disk'):raise ValueError('Unknown memory strategy')
     if int(memory_mib)<0:raise ValueError('RAM limit must be 0 (automatic) or a positive number of MiB')
@@ -48,11 +50,11 @@ def plan(count,folder,available,method='auto',mode='auto',memory_mib=0,free=None
     output=((count+18)//19)*8+MIB if low_disk else count+2
     # The reduced formula's native dry-run reports 269 GiB scratch at 62.83B.
     # Use 4.65 bytes/digit plus fixed headroom, not an optimistic peak guess.
-    scratch=((count*465+99)//100+128*MIB if low_disk else int(count*10+128*MIB)) if disk else 0
+    scratch=((count*465+99)//100+128*MIB if low_disk and constant=='pi' else int(count*10+128*MIB)) if disk else 0
     disk_needed=output+scratch
     free=shutil.disk_usage(folder).free if free is None else free
-    if free<disk_needed+DISK_RESERVE:raise OSError(f'Not enough free disk space: {"reduced Chudnovsky + packed YCD" if low_disk else "this run"} needs up to {gib_text(disk_needed)} GiB for output and temporary blocks, plus the 2 GiB reserve; {gib_text(free)} GiB is available.')
-    return {'digits':count,'mode':'disk' if disk else 'ram','availableBytes':available,'estimatedBytes':required,
+    if free<disk_needed+DISK_RESERVE:raise OSError(f'Not enough free disk space: {"reduced Chudnovsky + packed YCD" if low_disk and constant=="pi" else "packed native output" if low_disk else "this run"} needs up to {gib_text(disk_needed)} GiB for output and temporary blocks, plus the 2 GiB reserve; {gib_text(free)} GiB is available.')
+    return {'digits':count,'constant':constant,'reducedFormula':low_disk and constant=='pi','mode':'disk' if disk else 'ram','availableBytes':available,'estimatedBytes':required,
             'ramBudgetBytes':budget,'scratchLimitBytes':scratch,'outputBytes':output,'peakDiskBytes':disk_needed,
             'freeDiskBytes':free,'diskReserveBytes':DISK_RESERVE,'requiresElevation':disk and os.name=='nt',
             'memoryMiB':int(memory_mib),'requestedMode':mode,'lowDisk':low_disk,'outputFormat':'ycd' if low_disk else 'text'}
@@ -93,11 +95,15 @@ def job_bytes(work):
 
 def prune_cache(folder,keep=(),quota=CACHE_LIMIT):
     folder=Path(folder).resolve();entries=[]
-    for path in list(folder.glob('pi-*.txt'))+list(folder.glob('pi-*.ycd'))+list(folder.glob('pi-*.mpt')):
+    from constants import CONSTANTS
+    for path in (p for constant in CONSTANTS for suffix in ('txt','ycd','mpt') for p in folder.glob(f'{constant}-*.{suffix}')):
         try:
-            if path.is_symlink() or not re.fullmatch(r'pi-\d+\.(?:txt|ycd|mpt)',path.name):continue
+            if path.is_symlink() or not re.fullmatch(r'(?:'+'|'.join(CONSTANTS)+r')-\d+\.(?:txt|ycd|mpt)',path.name):continue
             meta=path.with_suffix('.json');info=json.loads(meta.read_text())
             if info.get('cacheManaged') is not True:continue
+            # Large completed calculations are persistent datasets. Changing
+            # constants must not evict a dataset bigger than the cache budget.
+            if path.stat().st_size>quota:continue
             entries.append((path.stat().st_mtime_ns,path,path.stat().st_size))
         except (OSError,ValueError):continue
     total=sum(item[2] for item in entries)

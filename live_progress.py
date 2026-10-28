@@ -20,7 +20,7 @@ PHASES={
  'cleanup':('Clearing temporary files',9,.995),
  'complete':('Native output verified',9,1),
 }
-MARKERS=[('Series Common','series'),('Large Division...','divide'),('InvSqrt(','sqrt'),
+MARKERS=[('Series Hyperdescent','series'),('Series Common','series'),('Large Division...','divide'),('InvSqrt(','sqrt'),('Sqrt(','sqrt'),
  ('Verifying Large Multiply','multiply_verify'),('Large Multiply...','multiply'),
  ('Processing Hexadecimal Digits','hex'),('Base Converting:','convert'),
  ('Writing Decimal Digits:','write'),('Verifying Base Conversion:','base_verify'),

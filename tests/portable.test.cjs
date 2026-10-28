@@ -4,7 +4,8 @@ const root=path.resolve(__dirname,'..');
 function readExistingSeed(){
  const dir=path.join(root,'data'),seed=path.join(dir,'pi-5000000.txt');
  if(fs.existsSync(seed))return fs.readFileSync(seed,'ascii');
- const file=fs.readdirSync(dir).filter(n=>/^pi-\d+\.txt$/.test(n)).map(n=>path.join(dir,n)).find(p=>fs.statSync(p).size>=5000000);
+ const file=(fs.existsSync(dir)?fs.readdirSync(dir):[]).filter(n=>/^pi-\d+\.txt$/.test(n)).map(n=>path.join(dir,n)).find(p=>fs.statSync(p).size>=5000000);
+ if(!file){const html=fs.readFileSync(path.join(root,'HTML Version/index.html'),'utf8'),match=html.match(/window\.PI_BUNDLED_DIGITS=("[0-9]+");/);if(!match)throw Error('No bundled validation sample');return JSON.parse(match[1]);}
  const fd=fs.openSync(file,'r'),head=Buffer.alloc(2),out=Buffer.alloc(5000000);
  try{fs.readSync(fd,head,0,2,0);fs.readSync(fd,out,0,out.length,head.toString()==='3.'?2:0);return out.toString('ascii');}finally{fs.closeSync(fd);}
 }

@@ -1,14 +1,15 @@
 {
+  "version": "2.0.0",
   "files": [
     {
       "file": ".gitignore",
-      "bytes": 646,
-      "sha256": "f4b89965998de71cec8ce5a1f37d7c68fe0d43afb7896c91907876de7f10f0a6"
+      "bytes": 699,
+      "sha256": "7bbd641c2e741aeb37921827df21039e9ee512ea1514516ca61480e4c1006828"
     },
     {
       "file": "app/app.js",
-      "bytes": 41433,
-      "sha256": "0534fa601f102cdca2b8fcad39f071f376fa17109fbf4b36ed2465382cd93c04"
+      "bytes": 44512,
+      "sha256": "3e92baabf8d43360b22b1435baa9bbd1750facb5599c9223ac152bd6085d6e27"
     },
     {
       "file": "app/compute-live.js",
@@ -27,8 +28,8 @@
     },
     {
       "file": "app/index.html",
-      "bytes": 14260,
-      "sha256": "eb405cac6e3cbf970d8730544c80937a1b2705e3fc5ee6e59d71f40431fb409d"
+      "bytes": 14822,
+      "sha256": "59ea2304ebb6cceaaa771b7d5fdde9a1dc459db4e0c08f14556dd11e974e636b"
     },
     {
       "file": "app/live.css",
@@ -106,6 +107,11 @@
       "sha256": "8d7bdd732764dd558c0c6e1265e8f68d9531f28be85df755a3eb4f6be14fde2f"
     },
     {
+      "file": "benchmarks/irrational-constants-2026-10-28.json",
+      "bytes": 1976,
+      "sha256": "56d07c515f3a0b496da03e8a8df1c9f008be6ea42d85a5c5907c03542e61dd76"
+    },
+    {
       "file": "benchmarks/LIVE-PROGRESS.txt",
       "bytes": 2282,
       "sha256": "dd59dd0876706cc7b743b42686c5a1a60f5f006392adcd46376c09a0432873f9"
@@ -136,14 +142,19 @@
       "sha256": "9ed767c5c1ed6007253e92feec01e2d926d29f4bceee7b90caedc605ad8b00d6"
     },
     {
+      "file": "constants.py",
+      "bytes": 5304,
+      "sha256": "b935b6841ebdf1c937c410d70c9130527db0eeadd6847a31fdd59dc08f4dddaa"
+    },
+    {
       "file": "digit_store.py",
-      "bytes": 6121,
-      "sha256": "01a8f60d073ee1370b595721b571b1be499db70783df6ce403cbacf5171748c1"
+      "bytes": 6467,
+      "sha256": "ba5eba540a5d858efb2aa9791411be5d61eb5fc11750273e0f5a3bd440414520"
     },
     {
       "file": "engine.py",
-      "bytes": 23051,
-      "sha256": "da16c7614185320c8c86d3ad3000f00361e37c467129185ef6d1db37f221765e"
+      "bytes": 24780,
+      "sha256": "894081d1a04d937295001aaec2cda6f7b24acc09e3b08d60d7be982405a6e059"
     },
     {
       "file": "examples/color-canvas.png",
@@ -162,8 +173,8 @@
     },
     {
       "file": "HTML Version/index.html",
-      "bytes": 5247987,
-      "sha256": "db8d09381b072a184b7eca6de08c7a203ad704275fa978bec6cd43f6e5bb1ce6"
+      "bytes": 5257349,
+      "sha256": "1300756aff473efa265419366f00245f519a2f726cf1205a3c09cb2191b551cd"
     },
     {
       "file": "HTML Version/OFL.txt",
@@ -172,13 +183,13 @@
     },
     {
       "file": "HTML Version/READ ME.txt",
-      "bytes": 1721,
-      "sha256": "0d667179e017cbe4f46c025dfd81748fa7f0b608f6b32f0b46b72a1b058a8bd3"
+      "bytes": 1944,
+      "sha256": "d38b6115f1d3a0eee2ba58b102a5ed5afdd2f2da40d7928a575d065b428d4fda"
     },
     {
       "file": "live_progress.py",
-      "bytes": 8403,
-      "sha256": "3e25b68b86c69a80b84758f72aba5ff346c421a050800bb0c5db83b2b9960d35"
+      "bytes": 8453,
+      "sha256": "d46a47f719003ec719079f581cc7e40ce9fd1a6c64fdb33d42dde5ccb3ed333a"
     },
     {
       "file": "LOW-DISK-MODE.md",
@@ -187,8 +198,13 @@
     },
     {
       "file": "mpt_store.py",
-      "bytes": 2536,
-      "sha256": "9baa968187abf1d6062a802c4e3540f9ab50dc5abcfee422ad13beff4ad26ae2"
+      "bytes": 2723,
+      "sha256": "b73b449d4e4aac8c9e5574eccd961c0d1f866fceff6094b02a89ba68b2e622cb"
+    },
+    {
+      "file": "MULTI-CONSTANTS.md",
+      "bytes": 6146,
+      "sha256": "2935977e8b66de8e69c12d40cc0a53fc8c6ef9bb2bad84ee2b90cbf13fc43648"
     },
     {
       "file": "native/LICENSE.txt",
@@ -202,28 +218,28 @@
     },
     {
       "file": "native_runner.py",
-      "bytes": 12557,
-      "sha256": "e6fc91b414bbb1870468178f94bcb5afdde46b2169f8e44e2d7031bcf73ae960"
+      "bytes": 13983,
+      "sha256": "64915138e900b9d341a73457faaa24a0f32dbb9fd4afd59195060e7a46a1afde"
     },
     {
       "file": "portable/portable-bridge.js",
-      "bytes": 6767,
-      "sha256": "b0b54f3047f110f8eacaadebc8cfe45aef9130bbbc25d95d188814d044038862"
+      "bytes": 9029,
+      "sha256": "09884e39ea1d6eb4ea4d5e293c0a56826b79bf173bc10e1cbafdd28fd437d22f"
     },
     {
       "file": "portable/portable-engine.js",
-      "bytes": 10221,
-      "sha256": "35f0a0cfffaac312747ba93b671368eeb6e61ff1e4296ab713de4803bc5aef58"
+      "bytes": 13315,
+      "sha256": "38d5bb0fba83d711274036656fd72227c1e138e6f60739ac892c7e27ca9e35b9"
     },
     {
       "file": "README.md",
-      "bytes": 4121,
-      "sha256": "a1fa87af41617662b34499143a6c34562ee612218688721d78273a38d17cc258"
+      "bytes": 5105,
+      "sha256": "b7081c33b214e74c6fa5ff7823f1949bef839a7cefc2a571d33a16091854e987"
     },
     {
       "file": "README.txt",
-      "bytes": 21614,
-      "sha256": "9cc1bed7d7180b68ecbe34a8ec5c76123581c46acf8a0abfa7a8c34bed3bc404"
+      "bytes": 22190,
+      "sha256": "0b319e2a0781163e31df0f5c8450c4fd39470bd4d7fe0808d47dca8a92ad3b6f"
     },
     {
       "file": "requirements.txt",
@@ -252,8 +268,8 @@
     },
     {
       "file": "resource_plan.py",
-      "bytes": 6744,
-      "sha256": "4d9fa5985e147d90344558174d3dc919fff389cfc6c46943f08f63c138dbe5c0"
+      "bytes": 7295,
+      "sha256": "50d750873afeb007bd1e7f8d8f5e8b632af38ac59f3533ac19127c02227ed422"
     },
     {
       "file": "Run tests.cmd",
@@ -262,8 +278,8 @@
     },
     {
       "file": "server.py",
-      "bytes": 23583,
-      "sha256": "47bd12eb6c4a3e3be49f1e46ef61a4b746450a1d12a4c2801485dc014c0ad6b4"
+      "bytes": 25846,
+      "sha256": "b6ff2a26740f1bccb2397990d9e9e0d6e5fa7a48b06007c40f8958ae95a6ff81"
     },
     {
       "file": "Setup Pi Explorer.cmd",
@@ -316,14 +332,24 @@
       "sha256": "82ce6eee755c98a26abeb5e499102398a357030de4554fd4dd30ddeb2d0c9661"
     },
     {
+      "file": "tests/constant-bridge.test.cjs",
+      "bytes": 2077,
+      "sha256": "211ed3ebe200bc477d3580f886c9a052bc75b423ed0f68465382e8f12fef661a"
+    },
+    {
+      "file": "tests/constants.test.cjs",
+      "bytes": 1535,
+      "sha256": "2f874893db06f902b81357fef367a14bb23a96280d554b349afd4c5469005415"
+    },
+    {
       "file": "tests/memory-mode.test.cjs",
       "bytes": 1933,
       "sha256": "01727154f61cd27ff8f3dde3ed04898cb5fe45c166ac2f6e1711bb8961e8fb8a"
     },
     {
       "file": "tests/portable.test.cjs",
-      "bytes": 2867,
-      "sha256": "5b989b72dbd4cd71808bb89ec7b4a93eb2ad52c780ca4787b0312d12e7d44cab"
+      "bytes": 3121,
+      "sha256": "dcf49945307107a5a7d1f69308c3a6616ff8ec307685fbde3c702c487f73959b"
     },
     {
       "file": "tests/smoke_api.py",
@@ -339,6 +365,11 @@
       "file": "tests/test_compact_research.py",
       "bytes": 1412,
       "sha256": "dea1f55d5d95a99846075bc4633909b85e060c38598567e979d96bff588ffdda"
+    },
+    {
+      "file": "tests/test_constants.py",
+      "bytes": 7757,
+      "sha256": "474c99884b80588d3131bcf667f7070c402ebfdbee2422357d3902f92e991fc2"
     },
     {
       "file": "tests/test_engine.py",
@@ -392,8 +423,8 @@
     },
     {
       "file": "tools/build_html.py",
-      "bytes": 7668,
-      "sha256": "1657af76b453ae8f4a16d34da9797836a12e853041af7e40dddc1e4cda126e72"
+      "bytes": 8389,
+      "sha256": "aaf7dffde52f199c4260f5278c2fe3fcd41c3eb0b488b246bd28fa78f7bedfdb"
     },
     {
       "file": "tools/build_scan.ps1",
@@ -477,8 +508,8 @@
     },
     {
       "file": "ycd_store.py",
-      "bytes": 5585,
-      "sha256": "c2f8959699dc9ebd2639feebe12e082105f6b577b4841c789f43ffb513285c7a"
+      "bytes": 5748,
+      "sha256": "e8690538de814ee09cdcdd15ca3a44a1425923852d5f761fe5d9c86b709a16da"
     }
   ],
   "excludedDataAndInstalledRuntimes": true,

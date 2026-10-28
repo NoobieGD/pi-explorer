@@ -1,3 +1,12 @@
+MULTI-CONSTANT EXPLORATION / VERSION 2.0.0
+Choose pi, e, sqrt(2), sqrt(3), sqrt(5), or the golden ratio in the Number menu.
+Reopen Start Pi Explorer to load the updated backend. Auto reuses optimized
+native arithmetic; Exact GMP specializes its algorithm to each constant.
+Caches, imports, exports and bookmarks preserve the identity and integer part.
+Large completed datasets are protected from automatic small-cache eviction.
+The standalone HTML and GitHub source upload copy are updated too.
+Read MULTI-CONSTANTS.md for usage, verification and supported engines.
+
 MEMORY MODE REPAIR / VERSION 1.8.2
 Leaving Compact now restores the memory strategy selected before entering it,
 rather than leaving Auto accidentally stuck in RAM-only mode. The compact

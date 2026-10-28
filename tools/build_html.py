@@ -17,10 +17,16 @@ seed=ROOT/'data/pi-5000000.txt'
 if seed.exists():digits=seed.read_text(encoding='ascii')
 else:
     # Reuse a prefix of an existing larger verified file; never calculate digits.
-    source=next(p for p in sorted((ROOT/'data').glob('pi-*.txt')) if p.stat().st_size>=5000000)
-    with source.open('rb') as stream:
-        prefix=stream.read(2);stream.seek(2 if prefix==b'3.' else 0)
-        digits=stream.read(5000000).decode('ascii')
+    source=next((p for p in sorted((ROOT/'data').glob('pi-*.txt')) if p.stat().st_size>=5000000),None)
+    if source:
+        with source.open('rb') as stream:
+            prefix=stream.read(2);stream.seek(2 if prefix==b'3.' else 0)
+            digits=stream.read(5000000).decode('ascii')
+    elif (OUT/'index.html').exists():
+        found=re.search(r'window\.PI_BUNDLED_DIGITS=("[0-9]+");',(OUT/'index.html').read_text(encoding='utf-8'))
+        if not found:raise ValueError('No verified bundled seed available')
+        digits=json.loads(found[1])
+    else:raise FileNotFoundError('Provide a verified 5M Pi seed or the existing standalone HTML')
 assert len(digits)==5000000
 assert hashlib.sha256(digits.encode()).hexdigest()=='e157d93a29d97005bf60b78d4a2071340eec92d50830012499be00afae1b66c3'
 icon=base64.b64encode((ROOT/'app/pi-explorer.ico').read_bytes()).decode()
@@ -70,8 +76,10 @@ Features: the same pan/zoom canvas, digits/text/color/pixel views, number and
 word search, variable-width shape search, image import, SFX, statistics,
 bookmarks, PNG capture, and digit-file import/export.
 
-The HTML version calculates decimal places with exact BigInt Chudnovsky in a
-Web Worker. No preset application digit ceiling is enforced. Browser memory,
+The HTML version calculates pi, e, sqrt(2), sqrt(3), sqrt(5), and the golden
+ratio using exact BigInt algorithms in a Web Worker. Factorial binary splitting
+certifies e with a rational tail bound; integer square roots certify radicals.
+Each constant has separate cache identities and the correct integer part. No preset application digit ceiling is enforced. Browser memory,
 exact number representation, string capacity and storage remain real limits.
 The included 5 million can be searched immediately. Use the desktop native
 engine for large runs; the browser engine does not support disk-backed math.

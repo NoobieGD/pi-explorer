@@ -3,6 +3,7 @@ import mmap
 import os
 from pathlib import Path
 import numpy as np
+from constants import infer,CONSTANTS
 
 PREFIX=b'14159265358979323846264338327950288419716939937510'
 PAIR_MOD=np.array([65+i%26 for i in range(100)],dtype=np.uint8)
@@ -28,25 +29,26 @@ def transform(raw,mode='digits',scheme='mod26',rule='threshold',alignment=0):
     return (PAIR_A1 if scheme=='a1z26' else PAIR_MOD)[code].tobytes()
 
 class DigitStore:
-    def __new__(cls,path):
+    def __new__(cls,path,constant=None):
         if cls is DigitStore and Path(path).suffix.lower()=='.mpt':
             from mpt_store import MptStore
-            return MptStore(path)
+            return MptStore(path,constant=constant)
         if cls is DigitStore and Path(path).suffix.lower()=='.ycd':
             from ycd_store import YcdStore
-            return YcdStore(path)
+            return YcdStore(path,constant=constant)
         return super().__new__(cls)
-    def __init__(self,path):
+    def __init__(self,path,constant=None):
         self.path=Path(path);self.file=self.path.open('rb')
         try:
+            self.constant=infer(path,constant);spec=CONSTANTS[self.constant];self.integerPart=spec['integer']
             if self.path.stat().st_size==0:raise ValueError('Empty digit file')
             self.mapping=mmap.mmap(self.file.fileno(),0,access=mmap.ACCESS_READ)
-            self.offset=2 if self.mapping[:2]==b'3.' else 0
+            self.offset=2 if self.mapping[:2]==str(self.integerPart).encode()+b'.' else 0
             end=len(self.mapping)
             while end>self.offset and self.mapping[end-1] in b'\r\n \t':end-=1
             self.length=end-self.offset
-            if self.length<1 or self.mapping[self.offset:self.offset+min(self.length,50)]!=PREFIX[:min(self.length,50)]:raise ValueError('Invalid pi prefix')
-            self.version=f'{self.path.name}:{self.path.stat().st_mtime_ns}:{self.length}'
+            if self.length<1 or self.mapping[self.offset:self.offset+min(self.length,50)]!=spec['prefix'][:min(self.length,50)].encode():raise ValueError('Invalid '+self.constant+' prefix')
+            self.version=f'{self.constant}:{self.path.name}:{self.path.stat().st_mtime_ns}:{self.length}'
         except Exception:
             self.close();raise
     def __len__(self):return self.length
@@ -107,8 +109,8 @@ class DigitStore:
         if hasattr(self,'file'):self.file.close()
     def __del__(self):self.close()
 
-def equal_files(a,b):
-    first=DigitStore(a);second=DigitStore(b)
+def equal_files(a,b,constant=None):
+    first=DigitStore(a,constant=constant);second=DigitStore(b,constant=first.constant)
     try:
         if len(first)!=len(second):return False
         return all(first[start:start+4*1024*1024]==second[start:start+4*1024*1024] for start in range(0,len(first),4*1024*1024))

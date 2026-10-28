@@ -1,0 +1,59 @@
+{
+  "calculationsAreFresh": true,
+  "results": [
+    {
+      "constant": "pi",
+      "count": 100000,
+      "exactSeconds": 0.038953599985688925,
+      "mpfrSeconds": 0.06613089999882504,
+      "nativeSeconds": 0.005,
+      "nativePackedOutputMatchesAllDigits": true,
+      "sha256": "5ebe8007d764bce33aba7a85a0da0924e96663fbb2e0fd089b9e8cd3be482bc2"
+    },
+    {
+      "constant": "e",
+      "count": 100000,
+      "exactSeconds": 0.026241200044751167,
+      "mpfrSeconds": 0.10914679995039478,
+      "nativeSeconds": 0.003,
+      "nativePackedOutputMatchesAllDigits": true,
+      "sha256": "f86e954468fc3d99e925acadc0b84060012c60632a5120fa1bfa95e05f27d140"
+    },
+    {
+      "constant": "sqrt2",
+      "count": 100000,
+      "exactSeconds": 0.011220599990338087,
+      "mpfrSeconds": 0.017302799969911575,
+      "nativeSeconds": 0.001,
+      "nativePackedOutputMatchesAllDigits": true,
+      "sha256": "d49f0faf72cdafe891d8282a27e6b1eb3cbe3b007bad88c94f4dcb3d7e72688f"
+    },
+    {
+      "constant": "sqrt3",
+      "count": 100000,
+      "exactSeconds": 0.014809400017838925,
+      "mpfrSeconds": 0.023845299961976707,
+      "nativeSeconds": 0.001,
+      "nativePackedOutputMatchesAllDigits": true,
+      "sha256": "45ba1572f573da8ee8bf633a690fa2ac6f3c94f2f8b3d603a6c0e12c43237aef"
+    },
+    {
+      "constant": "sqrt5",
+      "count": 100000,
+      "exactSeconds": 0.02131749998079613,
+      "mpfrSeconds": 0.02450739999767393,
+      "nativeSeconds": 0.001,
+      "nativePackedOutputMatchesAllDigits": true,
+      "sha256": "392b596b4167e532401c9349acc62a322235cc99fda72de4deb531034b2a0ac4"
+    },
+    {
+      "constant": "phi",
+      "count": 100000,
+      "exactSeconds": 0.009611000015866011,
+      "mpfrSeconds": 0.017385699960868806,
+      "nativeSeconds": 0.001,
+      "nativePackedOutputMatchesAllDigits": true,
+      "sha256": "21c029788bde43aa9fe81fb9838c3100f53576e668439d0c6dd46352bedc5f59"
+    }
+  ]
+}

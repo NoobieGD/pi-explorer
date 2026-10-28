@@ -1,8 +1,16 @@
 'use strict';
 const $=id=>document.getElementById(id);
+const NUMBERS={"pi": {"label": "Pi", "symbol": "π", "integer": 3, "prefix": "14159265358979323846264338327950288419716939937510", "native": "pi", "algorithm": "chudnovsky"}, "e": {"label": "Euler's number", "symbol": "e", "integer": 2, "prefix": "71828182845904523536028747135266249775724709369995", "native": "e", "algorithm": "exp(1)"}, "sqrt2": {"label": "Square root of 2", "symbol": "√2", "integer": 1, "prefix": "41421356237309504880168872420969807856967187537694", "native": "sqrt:2", "algorithm": "newton", "radicand": 2}, "sqrt3": {"label": "Square root of 3", "symbol": "√3", "integer": 1, "prefix": "73205080756887729352744634150587236694280525381038", "native": "sqrt:3", "algorithm": "newton", "radicand": 3}, "sqrt5": {"label": "Square root of 5", "symbol": "√5", "integer": 2, "prefix": "23606797749978969640917366873127623544061835961152", "native": "sqrt:5", "algorithm": "newton", "radicand": 5}, "phi": {"label": "Golden ratio", "symbol": "φ", "integer": 1, "prefix": "61803398874989484820458683436563811772030917980576", "native": "phi", "algorithm": "newton"}};
+const targetConstant=()=>$('constantSelect')?.value||'pi';
 const fmt=n=>Math.round(n).toLocaleString('en-US');
 const palette=['#ef5350','#ff9e40','#f6d85d','#78cb70','#39bba0','#42b9d5','#5486e8','#a67ce8','#e578b3','#e4e7ee'];
-const state={count:0,token:'',view:'digits',searchMode:'digits',scheme:'mod26',alignment:0,rule:'threshold',cols:200,
+function syncNumberOptions(){
+ const constant=targetConstant();
+ for(const option of $('engineSelect').options)if(['chudnovsky','tachuspi','compact'].includes(option.value))option.disabled=constant!=='pi';
+ if($('engineSelect').selectedOptions[0]?.disabled)$('engineSelect').value='auto';
+ const packed=$('engineSelect').querySelector('[value="ycruncher-low"]');if(packed)packed.textContent=constant==='pi'?'Reduced disk · Chudnovsky + packed YCD':'Native · packed YCD output';
+}
+const state={constant:'pi',constantsSupported:false,count:0,token:'',view:'digits',searchMode:'digits',scheme:'mod26',alignment:0,rule:'threshold',cols:200,
  scale:1,tx:35,ty:160,chunk:'',chunkStart:0,chunkKey:'',total:0,loading:false,dirty:true,
  matches:[],active:-1,query:'',shapeRows:[],job:null,computing:false,shapeSize:6,shape:[],sound:true,volume:.24,
  bookmarks:[],history:[],fps:0,fetchTicket:0,fetchWanted:null,stats:null,shuttingDown:false};
@@ -62,7 +70,7 @@ async function refreshPlan(){
  if(window.PiLocalApi){$('memoryControls').hidden=true;return;}
  const ticket=++planTicket;
  try{const count=readComputeCount();
-  const plan=await api('plan?'+new URLSearchParams({count,method:$('engineSelect').value,storageMode:$('memoryMode').value,force:$('forceCompute').checked}));
+  const plan=await api('plan?'+new URLSearchParams({count,constant:targetConstant(),method:$('engineSelect').value,storageMode:$('memoryMode').value,force:$('forceCompute').checked}));
   if(ticket!==planTicket)return;state.resourcePlan=plan;state.planBlocked=plan.launchable===false;$('resourcePlan').textContent=resourceText(plan);$('resourcePlan').classList.toggle('error',state.planBlocked);if(!state.computing)$('computeBtn').disabled=state.planBlocked;
  }catch(error){if(ticket===planTicket){state.planBlocked=true;if(!state.computing)$('computeBtn').disabled=state.planBlocked;$('resourcePlan').textContent=error.message;$('resourcePlan').classList.add('error');}}
 }
@@ -248,7 +256,8 @@ async function calculate(){
   clearTimeout(statusTimer);statusTimer=null;if(statusPollPromise)await statusPollPromise;clearTimeout(statusTimer);statusTimer=null;
   if(state.computing){await api('cancel',{});toast('Stopping computation…');return;}
   const count=readComputeCount();
-  await api('compute',{count,method:$('engineSelect').value,force:$('forceCompute').checked,storageMode:$('memoryMode').value});state.computing=true;state.requestedCount=count;sfx('compute');await pollStatus();
+  if(targetConstant()!=='pi'&&!state.constantsSupported)throw Error('Restart Pi Explorer to load the multi-constant engine.');
+  await api('compute',{count,constant:targetConstant(),method:$('engineSelect').value,force:$('forceCompute').checked,storageMode:$('memoryMode').value});state.computing=true;state.requestedCount=count;sfx('compute');await pollStatus();
  }catch(e){toast(e.message);}finally{if(!statusTimer&&!statusPollPromise)void pollStatus();}
 }
 let statusTimer=null,statusPollPromise=null;
@@ -262,26 +271,29 @@ function pollStatus(initial=false){
 async function readStatus(initial=false){
  if(state.shuttingDown)return;
  try{
-  const status=await api('status');state.token=status.token;state.maxDigits=status.maxDigits;const wasBusy=state.computing;state.computing=status.busy;
+  const status=await api('status');state.token=status.token;state.maxDigits=status.maxDigits;const wasBusy=state.computing;state.computing=status.busy;state.constantsSupported=Array.isArray(status.constants);
+  if(initial&&status.constant){$('constantSelect').value=status.busy?(status.targetConstant||status.constant):status.constant;syncNumberOptions();}
   $('generateSection').classList.toggle('computing',status.busy);
-  for(const id of ['digitCount','engineSelect','memoryMode','forceCompute'])$(id).disabled=status.busy||(id==='memoryMode'&&$('engineSelect').value==='compact');
+  for(const id of ['digitCount','constantSelect','engineSelect','memoryMode','forceCompute'])$(id).disabled=status.busy||(id==='memoryMode'&&$('engineSelect').value==='compact');
   $('computeBtn').disabled=!status.busy&&!!state.planBlocked;
   document.querySelectorAll('[data-count]').forEach(button=>button.disabled=status.busy);
   if(status.busy&&status.target)$('digitCount').value=status.target;
   $('footerStatus').textContent=window.PiLocalApi?'STANDALONE HTML · ALL DATA STAYS IN YOUR BROWSER':'COMPUTED LOCALLY · EXPLORED ENDLESSLY';
-  $('computeBtn').classList.toggle('computing',status.busy);$('computeBtn').querySelector('span').textContent=status.busy?'Cancel computation':'Calculate π';
+  $('computeBtn').classList.toggle('computing',status.busy);$('computeBtn').querySelector('span').textContent=status.busy?'Cancel computation':'Calculate '+NUMBERS[targetConstant()].symbol;
   $('computeMessage').textContent=status.message;$('computeProgress').style.width=(status.progress*100)+'%';$('computeTime').textContent=status.busy&&status.elapsed!==undefined?computeLive.duration(status.elapsed):status.cacheHit?'cache · '+(status.operationSeconds*1000).toFixed(1)+'ms':status.seconds?computeLive.duration(status.seconds):'—';
   computeLive.update(status);
   $('engineLabel').textContent=status.busy?status.telemetry?'COMPUTING · '+status.telemetry.phaseLabel.toUpperCase():'COMPUTING · '+Math.round(status.progress*100)+'% ESTIMATE':window.PiLocalApi?'BROWSER PRECISION ENGINE':'NATIVE PRECISION ENGINE';
   if(status.busy&&status.resourcePlan?.mode){$('resourcePlan').textContent=resourceText(status.resourcePlan);$('resourcePlan').classList.remove('error');}
   if(status.error&&wasBusy)toast(status.error.slice(-200));
   if(status.count!==state.count||(status.datasetId!==undefined&&status.datasetId!==state.datasetId)||(wasBusy&&!status.busy&&!status.cancelled&&!status.error)){
-   state.datasetId=status.datasetId;
+   state.datasetId=status.datasetId;state.constant=status.constant||'pi';
+   const number=NUMBERS[state.constant];$('integerPart').textContent=number.integer+'.';$('searchBtn').querySelector('span').textContent='Search in '+number.symbol;$('exportBtn').textContent='↧ Export '+number.symbol;$('constantFooter').textContent=number.symbol+' IS IRRATIONAL. YOUR CURIOSITY ISN’T.';
    state.count=status.count;state.chunkKey='';state.chunk='';cache.clear();state.stats=null;
    state.matches=[];state.active=-1;renderNotebook();
    $('loadedCount').textContent=fmt(state.count);$('navEnd').textContent=fmt(state.count);$('canvasEmpty').hidden=state.count>0;
-   $('loadedMethod').textContent=status.method==='tachuspi'?'TachusPI / packed':status.method==='ycruncher-low'?'y-cruncher / packed':status.method==='compact'?'Compact exact / MPFR verified':status.method==='chudnovsky'?'Chudnovsky / GMP':status.method==='mpfr'?'Native MPFR':status.method==='ycruncher'?'y-cruncher / CPU':status.method==='browser'?'Chudnovsky / browser':status.method==='bundled'?'Verified bundled digits':'Imported digits';
-   $('canvasTitle').textContent='Look closer.';$('canvasSubtitle').textContent=fmt(state.count)+' digits. Countless possibilities.';
+   $('loadedMethod').textContent=status.method==='tachuspi'?'TachusPI / packed':status.method==='ycruncher-low'?'y-cruncher / packed':status.method==='compact'?'Compact exact / MPFR verified':status.method==='exact'?'Exact GMP / certified':status.method==='chudnovsky'?'Chudnovsky / GMP':status.method==='mpfr'?'Native MPFR':status.method==='ycruncher'?'y-cruncher / CPU':status.method==='browser'?'Chudnovsky / browser':status.method==='bundled'?'Verified bundled digits':'Imported digits';
+   $('canvasTitle').textContent='Look closer.';$('loadedMethod').textContent=number.symbol+' · '+$('loadedMethod').textContent;
+   $('canvasSubtitle').textContent=number.symbol+' · '+fmt(state.count)+' digits. Countless possibilities.';
    if(!initial&&wasBusy){state.matches=[];state.active=-1;toast(fmt(state.count)+' decimal places ready.');sfx('found');}
    fit(true);invalidate();
   }
@@ -292,6 +304,7 @@ async function readStatus(initial=false){
 $('computeBtn').onclick=calculate;$('emptyCompute').onclick=()=>{$('digitCount').value=Math.min(5000000,computeLimit());calculate();};
 $('toggleGenerate').onclick=()=>{const collapsed=$('generateSection').classList.toggle('collapsed');$('toggleGenerate').setAttribute('aria-expanded',String(!collapsed));};
 document.querySelectorAll('[data-count]').forEach(b=>b.onclick=()=>{$('digitCount').value=b.dataset.count;document.querySelectorAll('[data-count]').forEach(x=>x.classList.toggle('active',x===b));void refreshPlan();sfx();});
+$('constantSelect').onchange=()=>{syncNumberOptions();$('computeBtn').querySelector('span').textContent='Calculate '+NUMBERS[targetConstant()].symbol;engineChanged();};
 $('digitCount').oninput=()=>{clearTimeout(planTimer);planTimer=setTimeout(refreshPlan,200);};$('engineSelect').onchange=engineChanged;$('memoryMode').onchange=refreshPlan;$('forceCompute').onchange=refreshPlan;
 $('compactCheckBtn').onclick=checkCompactTarget;
 $('compactAutoBtn').onclick=useRamAwareAuto;
@@ -325,22 +338,22 @@ $('statsBtn').onclick=async()=>{
  $('statsDialog').showModal();$('statsContent').textContent='Analyzing '+fmt(state.count)+' digits…';sfx();
  try{const stats=state.stats||await api('stats');state.stats=stats;const el=$('statsContent');el.innerHTML='';const max=Math.max(...stats.counts,1);
   stats.counts.forEach((count,digit)=>{const row=document.createElement('div');row.className='stat-row';row.innerHTML=`<span>${digit}</span><div class="stat-track"><i style="background:${palette[digit]};width:${count/max*100}%"></i></div><span>${fmt(count)} · ${(count/(stats.count||1)*100).toFixed(3)}%</span>`;el.append(row);});
-  const facts=document.createElement('div');facts.className='stat-facts';facts.innerHTML=`<p>SHANNON ENTROPY<b>${stats.entropy.toFixed(6)}</b>bits / digit · max 3.321928</p><p>LONGEST IDENTICAL RUN<b>${stats.longestRun.length} × ${stats.longestRun.digit}</b>at decimal place ${fmt(stats.longestRun.position)}</p><p>CHI-SQUARE<b>${stats.chiSquare.toFixed(3)}</b>10 categories · 9 degrees of freedom</p><p>DECIMAL PLACES<b>${fmt(stats.count)}</b>Excludes the integer part, 3.</p>`;el.append(facts);const hash=document.createElement('p');hash.className='hash';hash.textContent='DIGIT FILE SHA-256 / '+stats.sha256;el.append(hash);
+  const facts=document.createElement('div');facts.className='stat-facts';facts.innerHTML=`<p>SHANNON ENTROPY<b>${stats.entropy.toFixed(6)}</b>bits / digit · max 3.321928</p><p>LONGEST IDENTICAL RUN<b>${stats.longestRun.length} × ${stats.longestRun.digit}</b>at decimal place ${fmt(stats.longestRun.position)}</p><p>CHI-SQUARE<b>${stats.chiSquare.toFixed(3)}</b>10 categories · 9 degrees of freedom</p><p>DECIMAL PLACES<b>${fmt(stats.count)}</b>Excludes the integer part, ${NUMBERS[state.constant].integer}.</p>`;el.append(facts);const hash=document.createElement('p');hash.className='hash';hash.textContent='DIGIT FILE SHA-256 / '+stats.sha256;el.append(hash);
  }catch(e){$('statsContent').textContent=e.message;}
 };
 function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('captureBtn').onclick=()=>{canvas.toBlob(blob=>{if(blob)download(blob,'pi-explorer-'+state.view+'-'+Date.now()+'.png');},'image/png');sfx('bookmark');toast('Canvas saved as PNG.');};
 $('bookmarkBtn').onclick=()=>{
- const {ch}=geometry();const index=Math.max(0,Math.floor((H*.4-state.ty)/(ch*state.scale))*state.cols);const b={view:state.view,digit:Math.min(state.count-1,unitsToDigit(index)),cols:state.cols,scale:state.scale,scheme:state.scheme,alignment:state.alignment,rule:state.rule};state.bookmarks.unshift(b);state.bookmarks=state.bookmarks.slice(0,20);savePrefs();sfx('bookmark');toast('View bookmarked at digit '+fmt(b.digit+1)+'.');renderNotebook();
+ const {ch}=geometry();const index=Math.max(0,Math.floor((H*.4-state.ty)/(ch*state.scale))*state.cols);const b={constant:state.constant,view:state.view,digit:Math.min(state.count-1,unitsToDigit(index)),cols:state.cols,scale:state.scale,scheme:state.scheme,alignment:state.alignment,rule:state.rule};state.bookmarks.unshift(b);state.bookmarks=state.bookmarks.slice(0,20);savePrefs();sfx('bookmark');toast('View bookmarked at digit '+fmt(b.digit+1)+'.');renderNotebook();
 };
 function renderNotebook(){
  if(state.matches.length)return;
  const el=$('results');el.innerHTML='';$('resultHeading').textContent='SAVED VIEWS';$('resultCount').textContent=String(state.bookmarks.length).padStart(2,'0');
  if(!state.bookmarks.length){el.innerHTML='<div class="empty-results"><div class="orbit-icon">⌕</div><p>What are you looking for?</p><span>Your next discovery is a search away.</span></div>';return;}
- state.bookmarks.forEach(b=>{const button=document.createElement('button');button.className='result-card';button.innerHTML='<div class="result-top"><strong></strong><small>⌑</small></div><p></p>';button.querySelector('strong').textContent='Digit '+fmt(b.digit+1);button.querySelector('p').textContent=b.view.toUpperCase()+' · width '+b.cols;button.onclick=()=>{if(b.digit>=state.count){toast('Compute more digits to open this bookmark.');return;}state.cols=b.cols;state.scheme=b.scheme;state.alignment=b.alignment||0;state.rule=b.rule||'threshold';$('rowWidth').value=b.cols;$('textScheme').value=state.scheme;$('pairOffset').checked=state.alignment===1;$('pixelRule').value=state.rule;setView(b.view,false);flyTo(digitToUnits(b.digit),b.scale);sfx();};el.append(button);});
+ state.bookmarks.forEach(b=>{const button=document.createElement('button');button.className='result-card';button.innerHTML='<div class="result-top"><strong></strong><small>⌑</small></div><p></p>';button.querySelector('strong').textContent='Digit '+fmt(b.digit+1);button.querySelector('p').textContent=NUMBERS[b.constant||'pi'].symbol+' · '+b.view.toUpperCase()+' · width '+b.cols;button.onclick=()=>{if((b.constant||'pi')!==state.constant){toast('This bookmark belongs to '+NUMBERS[b.constant||'pi'].symbol+'. Load that constant first.');return;}if(b.digit>=state.count){toast('Compute more digits to open this bookmark.');return;}state.cols=b.cols;state.scheme=b.scheme;state.alignment=b.alignment||0;state.rule=b.rule||'threshold';$('rowWidth').value=b.cols;$('textScheme').value=state.scheme;$('pairOffset').checked=state.alignment===1;$('pixelRule').value=state.rule;setView(b.view,false);flyTo(digitToUnits(b.digit),b.scale);sfx();};el.append(button);});
 }
-$('importBtn').onclick=()=>$('importInput').click();$('importInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(!window.PiLocalApi){const available=await api('status');if(file.size>available.maxInlineImportBytes)throw Error('This file exceeds the current RAM budget for inline import. Place pi-<count>.txt in the app data folder and reopen to load it without copying.');}toast('Reading digit file…');const result=await api('import',{digits:await file.text()});await pollStatus();toast(fmt(result.count)+' digits imported. Prefix checked; remainder supplied by your file.');}catch(e){toast(e.message);}e.target.value='';};
-$('exportBtn').onclick=async()=>{if(!state.count){toast('Compute digits first.');return;}try{if(window.PiLocalApi)download(new Blob([await api('export')],{type:'text/plain'}),'pi-'+state.count+'-decimal-places.txt');else{const a=document.createElement('a');a.href='/api/export';a.download='pi-'+state.count+'-decimal-places.txt';a.click();}sfx();}catch(e){toast(e.message);}};
+$('importBtn').onclick=()=>$('importInput').click();$('importInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(!window.PiLocalApi){const available=await api('status');if(file.size>available.maxInlineImportBytes)throw Error('This file exceeds the current RAM budget for inline import. Place pi-<count>.txt in the app data folder and reopen to load it without copying.');}toast('Reading digit file…');const result=await api('import',{constant:targetConstant(),digits:await file.text()});await pollStatus();toast(fmt(result.count)+' digits imported. Prefix checked; remainder supplied by your file.');}catch(e){toast(e.message);}e.target.value='';};
+$('exportBtn').onclick=async()=>{if(!state.count){toast('Compute digits first.');return;}try{if(window.PiLocalApi)download(new Blob([await api('export')],{type:'text/plain'}),state.constant+'-'+state.count+'-decimal-places.txt');else{const a=document.createElement('a');a.href='/api/export';a.download=state.constant+'-'+state.count+'-decimal-places.txt';a.click();}sfx();}catch(e){toast(e.message);}};
 $('quitBtn').onclick=async()=>{try{if(state.job)await api('search/cancel',{id:state.job});state.shuttingDown=true;await api('shutdown',{});$('guideDialog').close();toast('Local engine stopped. Close this window; use Start Pi Explorer to reopen.');$('footerStatus').textContent='LOCAL ENGINE STOPPED';}catch(e){toast(e.message);}};
 document.addEventListener('keydown',e=>{
  if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||document.querySelector('dialog[open]'))return;

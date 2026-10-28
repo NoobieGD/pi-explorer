@@ -1,5 +1,6 @@
 /* Pi Explorer browser engine. No network or native-server dependencies. */
 'use strict';
+const NUMBER_INFO={"pi": {"label": "Pi", "symbol": "π", "integer": 3, "prefix": "14159265358979323846264338327950288419716939937510", "native": "pi", "algorithm": "chudnovsky"}, "e": {"label": "Euler's number", "symbol": "e", "integer": 2, "prefix": "71828182845904523536028747135266249775724709369995", "native": "e", "algorithm": "exp(1)"}, "sqrt2": {"label": "Square root of 2", "symbol": "√2", "integer": 1, "prefix": "41421356237309504880168872420969807856967187537694", "native": "sqrt:2", "algorithm": "newton", "radicand": 2}, "sqrt3": {"label": "Square root of 3", "symbol": "√3", "integer": 1, "prefix": "73205080756887729352744634150587236694280525381038", "native": "sqrt:3", "algorithm": "newton", "radicand": 3}, "sqrt5": {"label": "Square root of 5", "symbol": "√5", "integer": 2, "prefix": "23606797749978969640917366873127623544061835961152", "native": "sqrt:5", "algorithm": "newton", "radicand": 5}, "phi": {"label": "Golden ratio", "symbol": "φ", "integer": 1, "prefix": "61803398874989484820458683436563811772030917980576", "native": "phi", "algorithm": "newton"}};
 const PI_PREFIX='14159265358979323846264338327950288419716939937510';
 const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
 function isqrt(n){if(n<0n)throw Error('Negative square root');if(n<2n)return n;let x=1n<<BigInt(Math.ceil(n.toString(2).length/2));for(;;){const y=(x+n/x)>>1n;if(y>=x)return x;x=y;}}
@@ -14,6 +15,29 @@ function computePi(count,progress=()=>{}){
  const [,q,t]=split(0,terms);progress(.69,'Computing exact integer square root');const root=isqrt(10005n*10n**BigInt(2*n));progress(.87,'Final division and decimal conversion');
  const raw=(q*426880n*root/t).toString(),digits=raw.slice(1,count+1);
  if(raw.length!==n+1||!digits.startsWith(PI_PREFIX.slice(0,Math.min(50,count))))throw Error('Pi verification failed');
+ return digits;
+}
+function computeConstant(count,constant='pi',progress=()=>{}){
+ if(!NUMBER_INFO[constant])throw Error('Unknown constant');
+ if(constant==='pi')return computePi(count,progress);
+ if(!Number.isSafeInteger(count)||count<1)throw Error('Enter a positive exact digit count.');
+ const spec=NUMBER_INFO[constant],scale=10n**BigInt(count);let result;
+ if(constant!=='e'){
+  progress(.1,'Exact integer square root');const root=isqrt(BigInt(constant==='phi'?5:spec.radicand)*scale*scale);result=constant==='phi'?(root+scale)/2n:root;
+ }else{
+  const target=count+32;let n=Math.max(8,Math.floor(target/Math.max(1,Math.log10(Math.max(10,target)))*1.3));
+  const logFactorial=n=>(n+.5)*Math.log(n)-n+.5*Math.log(2*Math.PI)+1/(12*n);
+  while(logFactorial(n)/Math.LN10<target)n=Math.max(n+1,Math.floor(n*1.1));
+  for(let attempt=0;attempt<4;attempt++){
+   let completed=0;const update=Math.max(1,Math.floor(n/40));
+   function split(a,b){if(b-a===1){if(++completed%update===0)progress(.03+.7*completed/n,'Factorial series · binary splitting');return[1n,BigInt(a)];}const mid=Math.floor((a+b)/2),[p,q]=split(a,mid),[r,s]=split(mid,b);return[p*s+r,q*s];}
+   const[p,q]=split(1,n+1),N=BigInt(n),lower=scale*(p+q)/q,upper=(scale*(N*(p+q)+1n)-1n)/(N*q);
+   if(lower===upper){result=lower;break;}n+=Math.max(32,Math.floor(n/10));
+  }
+  if(result===undefined)throw Error('Remainder did not certify all digits');
+ }
+ progress(.9,'Converting certified decimal digits');const raw=result.toString(),digits=raw.slice(1);
+ if(raw.length!==count+1||Number(raw[0])!==spec.integer||!digits.startsWith(spec.prefix.slice(0,Math.min(50,count))))throw Error('Constant verification failed');
  return digits;
 }
 function encodeLetters(digits,scheme='mod26',alignment=0){
@@ -62,9 +86,9 @@ async function statistics(digits){
  let sha256='Unavailable in this browser context';if(globalThis.crypto?.subtle){const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(digits));sha256=[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('');}
  return{counts,entropy,chiSquare,longestRun:longest,sha256,count:n};
 }
-if(typeof module!=='undefined'&&module.exports)module.exports={computePi,isqrt,encodeLetters,encodeBits,findMatches,findShapes,statistics};
+if(typeof module!=='undefined'&&module.exports)module.exports={computePi,computeConstant,NUMBER_INFO,isqrt,encodeLetters,encodeBits,findMatches,findShapes,statistics};
 if(typeof self!=='undefined'&&typeof self.postMessage==='function'){
- let digits='',derived=new Map(),jobs=new Map();
+ let digits='',constant='pi',derived=new Map(),jobs=new Map();
  const getData=(mode='digits',scheme='mod26',rule='threshold',alignment=0)=>{
   if(mode==='digits'||mode==='colors')return digits;const key=[mode,scheme,rule,alignment].join(':');
   if(!derived.has(key)){if(derived.size>=4)derived.clear();derived.set(key,mode==='text'?encodeLetters(digits,scheme,alignment):encodeBits(digits,rule));}return derived.get(key);
@@ -89,8 +113,8 @@ if(typeof self!=='undefined'&&typeof self.postMessage==='function'){
  self.onmessage=async({data:{id,cmd,args={}}})=>{
   try{
    let result;
-   if(cmd==='init'||cmd==='setDigits'){digits=args.digits;derived.clear();result={count:digits.length};}
-   else if(cmd==='compute'){const started=performance.now();const computed=computePi(args.count,(progress,message)=>self.postMessage({type:'computeProgress',progress,message}));result={digits:computed,seconds:(performance.now()-started)/1000};}
+   if(cmd==='init'||cmd==='setDigits'){digits=args.digits;constant=args.constant||'pi';if(!NUMBER_INFO[constant])throw Error('Unknown constant');derived.clear();result={count:digits.length};}
+   else if(cmd==='compute'){const started=performance.now();const computed=computeConstant(args.count,args.constant||'pi',(progress,message)=>self.postMessage({type:'computeProgress',progress,message}));result={digits:computed,seconds:(performance.now()-started)/1000};}
    else if(cmd==='digits'){const data=getData(args.mode,args.scheme,args.rule,+args.alignment||0),start=Math.max(0,+args.start||0),count=Math.min(2000000,+args.count||10000);result={start,total:data.length,data:data.slice(start,start+count)};}
    else if(cmd==='tile'){
     const p=Object.fromEntries(Object.entries(args).map(([k,v])=>[k,['mode','scheme','rule'].includes(k)?v:+v]));
@@ -102,7 +126,7 @@ if(typeof self!=='undefined'&&typeof self.postMessage==='function'){
     }
     result={...p,total,data:new TextDecoder().decode(out)};
    }
-   else if(cmd==='export')result='3.'+digits;
+   else if(cmd==='export')result=NUMBER_INFO[constant].integer+'.'+digits;
    else if(cmd==='stats')result=await statistics(digits);
    else if(cmd==='search'){
     if(!digits.length)throw Error('Compute or import digits first.');if([...jobs.values()].filter(j=>j.status==='running').length>=2)throw Error('Wait for the current searches.');

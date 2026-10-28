@@ -24,7 +24,10 @@ def tag_decimal_output(path, count):
         f.flush()
 
 class MptStore(YcdStore):
-    def __init__(self,path):
+    def __init__(self,path,constant=None):
+        from constants import infer
+        self.constant=infer(path,constant);self.integerPart=3
+        if self.constant!='pi':raise ValueError('TachusPI MPT is pi-only')
         self.path=Path(path);self.file=self.path.open('rb')
         try:
             self.mapping=mmap.mmap(self.file.fileno(),0,access=mmap.ACCESS_READ)

@@ -11,13 +11,14 @@ from digit_store import DigitStore,unit_step
 import numpy as np
 from stream_search import search_sequence,search_shapes
 import fast_search
+from constants import identify,CONSTANTS,infer
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'data'; DATA.mkdir(exist_ok=True)
 TOKEN=secrets.token_urlsafe(24)
 LOCK=threading.RLock()
 POOL=ThreadPoolExecutor(max_workers=2)
-STATE={'count':0,'busy':False,'progress':0,'message':'Ready','method':'auto','seconds':0}
+STATE={'count':0,'constant':'pi','integerPart':3,'busy':False,'progress':0,'message':'Ready','method':'auto','seconds':0}
 DIGITS=b''
 DERIVED={}
 JOBS=OrderedDict()
@@ -26,18 +27,22 @@ ACTIVE_CANCEL=None
 
 def load_file(path):
     global DIGITS
-    value=DigitStore(path)
+    meta=path.with_suffix('.json')
+    info=json.loads(meta.read_text()) if meta.exists() else {}
+    constant=infer(path,info.get('constant'));value=DigitStore(path,constant=constant)
     with LOCK:
         DIGITS=value;DERIVED.clear();fast_search.clear_cache()
         meta=path.with_suffix('.json')
         info=json.loads(meta.read_text()) if meta.exists() else {}
-        STATE.update(count=len(value),datasetId=value.version,seconds=info.get('seconds',0),nativeSeconds=info.get('nativeSeconds'),method=info.get('method','imported'),
+        STATE.update(count=len(value),constant=constant,integerPart=CONSTANTS[constant]['integer'],datasetId=value.version,seconds=info.get('seconds',0),nativeSeconds=info.get('nativeSeconds'),method=info.get('method','imported'),
                      message='Ready to explore',progress=1,resourcePlan=info.get('resourcePlan'))
+    atomic_write(DATA/'active-dataset.json',json.dumps({'file':path.name,'constant':constant}))
 
 def compute_job(count,method,force=False,settings=None):
     global PROCESS,ACTIVE_CANCEL
     try:
-        path=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low')
+        constant=identify((settings or {}).get('constant','pi'))
+        path=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low',constant=constant)
         meta=path.with_suffix('.json')
         cached_method=json.loads(meta.read_text()).get('method') if meta.exists() else ''
         if path.exists() and not force and (method=='auto' or cached_method==method):
@@ -68,7 +73,11 @@ def compute_job(count,method,force=False,settings=None):
             time.sleep(.15)
         code=p.returncode
         if code==0:
-            path=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low')
+            path=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low',constant=constant)
+            try:
+                committed=json.loads(progress_file.read_text()).get('datasetFile')
+                if committed in {f'{constant}-{count}.{suffix}' for suffix in ('txt','ycd','mpt')} and (DATA/committed).is_file():path=DATA/committed
+            except (OSError,ValueError):pass
             load_file(path)
             with LOCK: STATE.update(busy=False,error=None,cacheHit=False,operationSeconds=STATE['seconds'])
         else:
@@ -167,16 +176,18 @@ class Handler(BaseHTTPRequestHandler):
                         live['ageSeconds']=max(0,time.time()-live['updatedAt'])
                         result.update(telemetry=live,progress=live['overallEstimate'],message=live['phaseLabel'])
                     except (OSError,ValueError,KeyError):pass
-                result.update(token=TOKEN,engine=engine.g.mp_version(),maxDigits=engine.MAX_DIGITS,maxInlineImportBytes=max(65536,engine.available_memory()//8))
+                result.update(constants=[{'id':key,**value} for key,value in CONSTANTS.items()],token=TOKEN,engine=engine.g.mp_version(),maxDigits=engine.MAX_DIGITS,maxInlineImportBytes=max(65536,engine.available_memory()//8))
                 return self.send(result)
             if p=='/api/plan':
                 count=engine.resource_plan.digit_count(qs.get('count',['5000000'])[0]);method=qs.get('method',['auto'])[0]
+                constant=identify(qs.get('constant',['pi'])[0])
                 mode=qs.get('storageMode',['auto'])[0];memory=int(qs.get('memoryMiB',['0'])[0]);force=qs.get('force',['false'])[0]=='true'
-                if method not in ('auto','ycruncher','ycruncher-low','tachuspi','chudnovsky','mpfr','compact'):raise ValueError('Unknown arithmetic engine')
-                target=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low');meta=target.with_suffix('.json')
+                if method not in ('auto','ycruncher','ycruncher-low','tachuspi','chudnovsky','exact','mpfr','compact'):raise ValueError('Unknown arithmetic engine')
+                if constant!='pi' and method in ('tachuspi','compact'):raise ValueError('This engine supports pi only')
+                target=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low',constant=constant);meta=target.with_suffix('.json')
                 cached=target.exists() and not force and (method=='auto' or (meta.exists() and json.loads(meta.read_text()).get('method')==method))
                 if cached:return self.send({'mode':'cache','digits':count,'ramBudgetBytes':0,'peakDiskBytes':0,'outputBytes':target.stat().st_size,'requiresElevation':False})
-                return self.send(engine.computation_plan(count,DATA,method,mode,memory))
+                return self.send(engine.computation_plan(count,DATA,method,mode,memory,constant=constant))
             if p=='/api/compact-check':
                 from research.compact_engine import plan as compact_plan
                 count=engine.resource_plan.digit_count(qs.get('count',['200000000000'])[0])
@@ -204,10 +215,10 @@ class Handler(BaseHTTPRequestHandler):
             if p=='/api/export':
                 with LOCK:store=DIGITS
                 if not store:return self.send(b'3.',kind='text/plain')
-                self.send_response(200);self.send_header('Content-Type','text/plain; charset=utf-8');self.send_header('Content-Disposition',f'attachment; filename="pi-{len(store)}-decimal-places.txt"');self.send_header('Content-Length',str(len(store)+2));self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(b'3.')
+                self.send_response(200);self.send_header('Content-Type','text/plain; charset=utf-8');self.send_header('Content-Disposition',f'attachment; filename="{getattr(store,'constant','pi')}-{len(store)}-decimal-places.txt"');self.send_header('Content-Length',str(len(store)+2));self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(str(getattr(store,'integerPart',3)).encode()+b'.')
                 for chunk in store.chunks():self.wfile.write(chunk)
                 return
-            if p=='/api/health': return self.send({'app':'Pi Explorer','version':'1.9.2','scanner':fast_search.features()})
+            if p=='/api/health': return self.send({'app':'Pi Explorer','version':'2.0.0','scanner':fast_search.features()})
             if p=='/favicon.ico': return self.send(b'',kind='image/x-icon')
             file=ROOT/'app'/('index.html' if p=='/' else p.lstrip('/'))
             if not file.resolve().is_relative_to((ROOT/'app').resolve()) or not file.is_file():
@@ -235,18 +246,20 @@ class Handler(BaseHTTPRequestHandler):
             payload=json.loads(self.rfile.read(length) or b'{}')
             if self.path=='/api/compute':
                 count=engine.resource_plan.digit_count(payload.get('count',1_000_000));method=payload.get('method','auto')
-                if method not in ('auto','ycruncher','ycruncher-low','tachuspi','chudnovsky','mpfr','compact'): raise ValueError('Unknown arithmetic engine')
-                target=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low')
-                settings={'storageMode':payload.get('storageMode','auto'),'memoryMiB':int(payload.get('memoryMiB',0))}
+                constant=identify(payload.get('constant','pi'))
+                if method not in ('auto','ycruncher','ycruncher-low','tachuspi','chudnovsky','exact','mpfr','compact'): raise ValueError('Unknown arithmetic engine')
+                if constant!='pi' and method in ('tachuspi','compact'):raise ValueError('This engine supports pi only')
+                target=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low',constant=constant)
+                settings={'constant':constant,'storageMode':payload.get('storageMode','auto'),'memoryMiB':int(payload.get('memoryMiB',0))}
                 settings['serverPid']=os.getpid()
                 if hasattr(DIGITS,'path'):settings['protectedCache']=DIGITS.path.name
                 meta=target.with_suffix('.json')
                 cached=target.exists() and not payload.get('force') and (method=='auto' or (meta.exists() and json.loads(meta.read_text()).get('method')==method))
-                plan={'mode':'cache'} if cached else engine.computation_plan(count,DATA,method,settings['storageMode'],settings['memoryMiB'])
+                plan={'mode':'cache'} if cached else engine.computation_plan(count,DATA,method,settings['storageMode'],settings['memoryMiB'],constant=constant)
                 if plan.get('launchable') is False:raise MemoryError(plan['message'])
                 with LOCK:
                     if STATE['busy']: return self.send({'error':'A computation is already running'},409)
-                    STATE.update(busy=True,progress=0,message='Starting compact exact engine' if method=='compact' else 'Starting disk-backed blocks' if plan['mode']=='disk' else 'Starting native engine',error=None,cancelled=False,target=count,startedAt=time.perf_counter(),cacheHit=False,resourcePlan=plan,nativeJob=None,telemetry=None,phaseProgress=None,progressKind=None)
+                    STATE.update(busy=True,targetConstant=constant,progress=0,message='Starting compact exact engine' if method=='compact' else 'Starting disk-backed blocks' if plan['mode']=='disk' else 'Starting native engine',error=None,cancelled=False,target=count,startedAt=time.perf_counter(),cacheHit=False,resourcePlan=plan,nativeJob=None,telemetry=None,phaseProgress=None,progressKind=None)
                 threading.Thread(target=compute_job,args=(count,method,bool(payload.get('force')),settings),daemon=True).start()
                 return self.send({'ok':True})
             if self.path=='/api/cancel':
@@ -270,22 +283,23 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send({'ok':True})
             if self.path=='/api/import':
                 text=payload.get('digits','').strip()
-                if text.startswith('3.'): text=text[2:]
+                constant=identify(payload.get('constant',STATE.get('constant','pi')));spec=CONSTANTS[constant]
+                if text.startswith(str(spec['integer'])+'.'): text=text[2:]
                 text=''.join(text.split())
-                if not text.isascii() or not text.isdigit(): raise ValueError('Import a text file with decimal digits of pi')
-                if len(text)<50 or not text.startswith('14159265358979323846264338327950288419716939937510'):
-                    raise ValueError('The first 50 digits do not match pi')
+                if not text.isascii() or not text.isdigit(): raise ValueError('Import decimal digits of '+spec['label'])
+                if len(text)<50 or not text.startswith(spec['prefix']):
+                    raise ValueError('The first 50 digits do not match '+spec['label'])
                 with LOCK:
                     if STATE['busy']: raise ValueError('Wait for computation before importing')
-                    path=DATA/f'pi-{len(text)}.txt'
+                    path=DATA/f'{constant}-{len(text)}.txt'
                     if path.exists():
-                        previous=DigitStore(path)
+                        previous=DigitStore(path,constant=constant)
                         try:
                             if any(previous[i:i+4*1024*1024]!=text[i:i+4*1024*1024].encode('ascii') for i in range(0,len(text),4*1024*1024)):raise ValueError('This file disagrees with the cached digits')
                         finally:previous.close()
                     else:
                         path.write_text(text,encoding='ascii')
-                        path.with_suffix('.json').write_text(json.dumps({'method':'imported (prefix checked)','seconds':0}))
+                        path.with_suffix('.json').write_text(json.dumps({'constant':constant,'integerPart':spec['integer'],'method':'imported (prefix checked)','seconds':0}))
                     load_file(path)
                 return self.send({'ok':True,'count':len(text)})
             if self.path=='/api/shutdown':
@@ -335,7 +349,7 @@ def main():
         import urllib.request
         existing=json.loads(urllib.request.urlopen(f'http://127.0.0.1:{args.port}/api/health',timeout=1).read())
         if existing.get('app')=='Pi Explorer':
-            if existing.get('version')=='1.9.2':
+            if existing.get('version')=='2.0.0':
                 if not args.no_browser: open_window(f'http://127.0.0.1:{args.port}')
                 return
             status=json.loads(urllib.request.urlopen(f'http://127.0.0.1:{args.port}/api/status',timeout=1).read())
@@ -350,9 +364,14 @@ def main():
                 except Exception:break
     except Exception: pass
     engine.resource_plan.cleanup_abandoned(DATA)
-    files=list(DATA.glob('pi-*.txt'))+list(DATA.glob('pi-*.ycd'))+list(DATA.glob('pi-*.mpt'))
+    files=[p for constant in CONSTANTS for suffix in ('txt','ycd','mpt') for p in DATA.glob(f'{constant}-*.{suffix}')]
+    preferred=None
+    try:
+        active=json.loads((DATA/'active-dataset.json').read_text())['file']
+        if Path(active).name==active and DATA/active in files:preferred=DATA/active
+    except (OSError,ValueError,KeyError):pass
     if files:
-        try: load_file(max(files,key=lambda f:int(f.stem.split('-')[-1]) if f.stem.split('-')[-1].isdigit() else f.stat().st_size))
+        try: load_file(preferred or max(files,key=lambda f:int(f.stem.split('-')[-1]) if f.stem.split('-')[-1].isdigit() else f.stat().st_size))
         except Exception: traceback.print_exc()
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     print(f'Pi Explorer · http://127.0.0.1:{args.port}',flush=True)

@@ -15,6 +15,7 @@ from storage import atomic_write, write_progress
 from digit_store import transform, DigitStore, equal_files
 import numpy as np
 import resource_plan
+from constants import identify,CONSTANTS,compute as compute_constant
 
 MAX_DIGITS = None  # No application digit ceiling; preflight checks actual resources.
 ROOT=Path(__file__).resolve().parent
@@ -194,7 +195,17 @@ def available_memory():
 
 def native_memory_estimate(count):return resource_plan.estimate_ram(count)
 
-def computation_plan(count,folder=ROOT/'data',method='auto',mode='auto',memory_mib=0):
+def auto_native(count,mode='auto',memory_mib=0):
+    return YCRUNCHER.exists() and (mode=='disk' or count>=2_000_000 or count*14+40*resource_plan.MIB>resource_plan.ram_budget(available_memory(),memory_mib))
+
+def computation_plan(count,folder=ROOT/'data',method='auto',mode='auto',memory_mib=0,constant='pi'):
+    count=resource_plan.digit_count(count)
+    constant=identify(constant)
+    if constant!='pi' and method in ('tachuspi','compact'):raise ValueError('TachusPI and Compact are pi-only; choose Auto, Exact GMP or MPFR')
+    if method=='auto' and not auto_native(count,mode,memory_mib):method='exact'
+    if constant!='pi':
+        low_disk=method in ('auto','ycruncher-low')
+        return resource_plan.plan(count,folder,available_memory(),'ycruncher' if low_disk else method,mode,memory_mib,low_disk=low_disk,constant=constant)
     if method=='tachuspi':
         import tachuspi
         return tachuspi.plan(count,folder,available_memory(),mode,memory_mib)
@@ -236,7 +247,8 @@ def compute_ycruncher_file(count,folder,progress=None,options=None,deadline=None
     folder=Path(folder).resolve()
     import secrets
     options={'priority':0,**(options or {})}
-    plan=computation_plan(count,folder,'ycruncher-low' if options.get('lowDisk') else 'ycruncher',options.get('storageMode','auto'),options.get('memoryMiB',0))
+    constant=identify(options.get('constant','pi'))
+    plan=computation_plan(count,folder,'ycruncher-low' if options.get('lowDisk') else 'ycruncher',options.get('storageMode','auto'),options.get('memoryMiB',0),constant=constant)
     work=folder/'native-output'/f'run-{count}-{secrets.token_hex(4)}';work.mkdir(parents=True)
     logfile=work/'console.log'
     request={'digits':count,'ownerPid':os.getpid(),'plan':plan,'options':options,'deadline':deadline}
@@ -271,11 +283,11 @@ def compute_ycruncher_file(count,folder,progress=None,options=None,deadline=None
         if isinstance(proc,native_runner.ElevatedProcess):proc.close()
     log=logfile.read_text(errors='replace') if logfile.exists() else ''
     candidates=list(work.glob('*Dec*.ycd' if options.get('lowDisk') else '*Dec*.txt'))
-    if not candidates or 'Exception Encountered' in log or 'Spot Check: Good through' not in log:
+    if not candidates or not native_runner.native_verified(log,constant,0):
         resource_plan.cleanup(work,folder/'native-output',remove_output=True)
         raise RuntimeError('y-cruncher failed: '+log[-400:])
     output=max(candidates,key=lambda p:p.stat().st_mtime)
-    store=DigitStore(output)
+    store=DigitStore(output,constant=constant)
     valid=len(store)==count;store.close()
     if not valid:
         resource_plan.cleanup(work,folder/'native-output',remove_output=True)
@@ -301,8 +313,10 @@ def worker(count, method, folder, progress_name='compute-progress.json',request_
     packed=method=='ycruncher-low'
     request_file=folder/Path(request_name).name if request_name else None
     settings=json.loads(request_file.read_text()) if request_file and request_file.exists() else {}
-    if requested=='auto' and count>=2000000 and YCRUNCHER.exists():
-        packed=bool(computation_plan(count,folder,'auto',settings.get('storageMode','auto'),settings.get('memoryMiB',0)).get('lowDisk'))
+    constant=identify(settings.get('constant','pi'));settings['constant']=constant
+    if constant!='pi' and method in ('tachuspi','compact'):raise ValueError('This engine is pi-only')
+    if requested=='auto' and auto_native(count,settings.get('storageMode','auto'),settings.get('memoryMiB',0)):
+        packed=bool(computation_plan(count,folder,'auto',settings.get('storageMode','auto'),settings.get('memoryMiB',0),constant=constant).get('lowDisk'))
     if packed:settings['lowDisk']=True;method='ycruncher'
     cancel_file=progress_file.with_suffix('.cancel')
     def should_cancel():
@@ -313,12 +327,13 @@ def worker(count, method, folder, progress_name='compute-progress.json',request_
         return False
     def native_job(work,plan):
         write_progress(progress_file,.02,'Windows approval needed for disk-backed blocks' if plan.get('requiresElevation') else 'Starting native calculator',nativeJob=work.name,resourcePlan=plan,progressKind='phase')
-    if method=='auto': method='ycruncher' if YCRUNCHER.exists() and count>=2000000 else 'chudnovsky'
+    if method=='auto': method='ycruncher' if auto_native(count,settings.get('storageMode','auto'),settings.get('memoryMiB',0)) else 'chudnovsky' if constant=='pi' else 'exact'
+    if method=='chudnovsky' and constant!='pi':method='exact'
     if method=='compact' and settings.get('storageMode')=='disk':raise ValueError('The compact engine is currently RAM-only')
     if settings.get('storageMode')=='disk' and method!='tachuspi':method='ycruncher'
     native_seconds=None
     fallback=None
-    path=resource_plan.dataset_path(folder,count,'mpt' if method=='tachuspi' else packed)
+    path=resource_plan.dataset_path(folder,count,'mpt' if method=='tachuspi' else packed,constant=constant)
     info={}
     if method in ('ycruncher','tachuspi'):
         try:
@@ -330,14 +345,14 @@ def worker(count, method, folder, progress_name='compute-progress.json',request_
                 native_plan=info['resourcePlan']
             else:
                 options_file=folder/'performance-profile.json'
-                options=json.loads(options_file.read_text()) if options_file.exists() else {}
+                options=json.loads(options_file.read_text()) if options_file.exists() and constant=='pi' else {'ioProfile':'ssd'}
                 if 'ram' in options or 'disk' in options:
                     selected=computation_plan(count,folder,'ycruncher-low' if packed else 'ycruncher',settings.get('storageMode','auto'),settings.get('memoryMiB',0))['mode']
                     identity={'processor':platform.processor(),'logicalCores':os.cpu_count()}
                     if (options.get('tunedThroughDigits') is not None and count>int(options['tunedThroughDigits'])) or (options.get('cpuSignature') and options['cpuSignature']!=identity):options={'ioProfile':'ssd'} if selected=='disk' else {}
                     else:options=dict(options.get(selected,{}))
                 options.update(settings)
-                native_plan=computation_plan(count,folder,'ycruncher-low' if packed else 'ycruncher',options.get('storageMode','auto'),options.get('memoryMiB',0))
+                native_plan=computation_plan(count,folder,'ycruncher-low' if packed else 'ycruncher',options.get('storageMode','auto'),options.get('memoryMiB',0),constant=constant)
                 output,info=compute_ycruncher_file(count,folder,progress,options,cancelled=should_cancel,on_native_job=native_job)
             write_progress(progress_file,.995,'Committing verified cache',nativeJob=None,phaseProgress=None,progressKind='phase')
             if cancel_file.exists():
@@ -354,36 +369,36 @@ def worker(count, method, folder, progress_name='compute-progress.json',request_
                     except PermissionError:
                         if attempt==23:raise
                         time.sleep(.05)
-            saved=DigitStore(path);file_format='tachuspi-mpt' if method=='tachuspi' else 'ycd-packed' if getattr(saved,'packed',False) else 'native-3-prefix' if saved.offset else 'raw-decimal';saved.close()
-            info.update(count=count,method='ycruncher-low' if packed else method,seconds=time.perf_counter()-started,sha256=None,format=file_format,verifiedOutput=True,cacheManaged=True)
+            saved=DigitStore(path,constant=constant);file_format='tachuspi-mpt' if method=='tachuspi' else 'ycd-packed' if getattr(saved,'packed',False) else 'integer-prefix' if saved.offset else 'raw-decimal';saved.close()
+            info.update(count=count,constant=constant,integerPart=CONSTANTS[constant]['integer'],method='ycruncher-low' if packed else method,seconds=time.perf_counter()-started,sha256=None,format=file_format,verifiedOutput=True,cacheManaged=True)
             atomic_write(path.with_suffix('.json'),json.dumps(info))
             resource_plan.prune_cache(folder,keep=(path.name,settings.get('protectedCache',''),'pi-5000000.txt'))
-            progress(1,'Verified digits ready · scratch cleared');return
+            write_progress(progress_file,1,'Verified digits ready · scratch cleared',datasetFile=path.name,constant=constant);return
         except InterruptedError:raise
         except Exception as error:
             if method=='tachuspi' and locals().get('output'):
                 resource_plan.cleanup(output.parent,folder.resolve()/'native-output',remove_output=True)
             if isinstance(error,(PermissionError,MemoryError)) or settings.get('storageMode')=='disk' or locals().get('native_plan',{}).get('mode')=='disk':raise
             if requested!='auto': raise
-            computation_plan(count,folder,'chudnovsky','ram')
+            computation_plan(count,folder,'chudnovsky' if constant=='pi' else 'exact','ram',constant=constant)
             fallback=str(error)
             progress(.03,'Native accelerator unavailable · using GMP')
-            method='chudnovsky'
-            digits=compute_pi(count,method,progress)
+            method='chudnovsky' if constant=='pi' else 'exact'
+            digits=compute_constant(count,constant,method,progress)
     else:
         if method=='compact':digits,info['compact']=compute_compact(count,progress)
-        else:digits=compute_pi(count,method,progress)
+        else:digits=compute_constant(count,constant,method,progress)
     if path.exists():
-        previous=DigitStore(path)
+        previous=DigitStore(path,constant=constant)
         try:
             if len(previous)!=len(digits) or any(previous[i:i+4*1024*1024]!=digits[i:i+4*1024*1024].encode('ascii') for i in range(0,len(digits),4*1024*1024)):raise ArithmeticError('Independent engines disagree with the cached digits')
         finally:previous.close()
     else:atomic_write(path,digits,encoding='ascii')
-    info.update(count=count,method=method,seconds=time.perf_counter()-started,
+    info.update(count=count,constant=constant,integerPart=CONSTANTS[constant]['integer'],method=method,seconds=time.perf_counter()-started,
           nativeSeconds=native_seconds,fallback=fallback,sha256=hashlib.sha256(digits.encode()).hexdigest(),cacheManaged=True)
     atomic_write(path.with_suffix('.json'),json.dumps(info))
     resource_plan.prune_cache(folder,keep=(path.name,settings.get('protectedCache',''),'pi-5000000.txt'))
-    progress(1,'Ready to explore')
+    write_progress(progress_file,1,'Ready to explore',datasetFile=path.name,constant=constant)
 
 if __name__=='__main__':
     worker(int(sys.argv[1]),sys.argv[2],sys.argv[3],sys.argv[4] if len(sys.argv)>4 else 'compute-progress.json',sys.argv[5] if len(sys.argv)>5 else None)

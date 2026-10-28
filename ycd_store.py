@@ -14,9 +14,11 @@ POWERS=np.array([10**i for i in range(19)],dtype=np.uint64)
 
 class YcdStore:
     packed=True
-    def __init__(self,path):
+    def __init__(self,path,constant=None):
         self.path=Path(path);self.file=self.path.open('rb')
         try:
+            from constants import infer,CONSTANTS
+            self.constant=infer(path,constant);spec=CONSTANTS[self.constant];self.integerPart=spec['integer']
             self.mapping=mmap.mmap(self.file.fileno(),0,access=mmap.ACCESS_READ)
             head=self.mapping[:65536];end=head.find(b'\0')
             if end<0 or not head.startswith(b'#Compressed Digit File'):raise ValueError('Invalid YCD header')
@@ -30,8 +32,7 @@ class YcdStore:
             self.length=min(block,total) if total else block;self.offset=end+1
             if self.offset+((self.length+18)//19)*8>len(self.mapping):raise ValueError('Truncated YCD payload')
             self.version=f'ycd:{self.path.name}:{self.path.stat().st_mtime_ns}:{self.length}'
-            from digit_store import PREFIX
-            if self[:min(self.length,50)]!=PREFIX[:min(self.length,50)]:raise ValueError('Invalid pi prefix in YCD')
+            if self[:min(self.length,50)]!=spec['prefix'][:min(self.length,50)].encode():raise ValueError('Invalid '+self.constant+' prefix in YCD')
         except Exception:self.close();raise
     def __len__(self):return self.length
     def __bool__(self):return self.length>0

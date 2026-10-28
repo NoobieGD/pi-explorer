@@ -9,6 +9,15 @@ from live_progress import NativeProgress,ProcessSampler
 NATIVE=ROOT/'vendor/y-cruncher/y-cruncher v0.8.7.9547b/y-cruncher.exe'
 _owner_kernel=None
 
+def native_verified(log,constant='pi',returncode=None):
+    from constants import identify
+    constant=identify(constant)
+    if 'Total Computation Time:' not in log or re.search(r'Spot Check: (?:Bad|Fail)|Verification Failed|Exception Encountered',log,re.I):return False
+    if constant=='pi':return 'Spot Check: Good through' in log
+    # Some built-in radicals have no bundled reference-digit spot-check file.
+    # Require a clean exit after BOTH native output verification stages instead.
+    return returncode==0 and 'Verifying Base Conversion:' in log and 'Verifying Decimal Output:' in log
+
 def stop_native(proc):
     if proc.poll() is not None:return
     if os.name=='nt':subprocess.run(['taskkill','/PID',str(proc.pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,creationflags=subprocess.CREATE_NO_WINDOW)
@@ -16,7 +25,15 @@ def stop_native(proc):
 
 def configuration(work,count,options,plan):
     """Generate a native config from the bundled program's own saved SSD settings."""
-    text=(ROOT/'vendor'/('ycruncher-reduced-template.cfg' if options.get('lowDisk') else 'ycruncher-ssd-template.cfg')).read_text(encoding='utf-8-sig')
+    from constants import identify,CONSTANTS
+    constant=identify(options.get('constant','pi'));spec=CONSTANTS[constant]
+    text=(ROOT/'vendor'/('ycruncher-reduced-template.cfg' if options.get('lowDisk') and constant=='pi' else 'ycruncher-ssd-template.cfg')).read_text(encoding='utf-8-sig')
+    if constant!='pi':
+        kind='sqrt' if 'radicand' in spec else 'goldenratio' if constant=='phi' else 'e'
+        fields='Constant : '+json.dumps(kind)+'\n            Algorithm : '+json.dumps(spec['algorithm'])
+        if 'radicand' in spec:fields+='\n            Argument : '+str(spec['radicand'])
+        text,changed=re.subn(r'Constant : \{\s*Constant : "pi"\s*Algorithm : "[^"]+"\s*\}',lambda _: 'Constant : {\n            '+fields+'\n        }',text,count=1)
+        if changed!=1:raise ValueError('Native constant template does not match the expected schema')
     if options.get('lowDisk'):text=text.replace('Framework : "txt"','Framework : "ycd"\n            DigitsPerFile : 0')
     text=re.sub(r'DecimalDigits : \d+',f'DecimalDigits : {int(count)}',text)
     text=text.replace('EnableHexDigits : true','EnableHexDigits : false')
@@ -56,11 +73,13 @@ def owner_alive(pid):
     finally:api.CloseHandle(handle)
 
 def command_for(exe,work,count,options,plan):
+    from constants import identify,CONSTANTS
+    constant=identify(options.get('constant','pi'))
     if (plan['mode']=='disk' and options.get('ioProfile','ssd')!='legacy') or options.get('cores') or options.get('lowDisk'):
         config=configuration(work,count,options,plan)
         return [str(exe),'skip-warnings','pause:-2','colors:0','console:linux-vterm','status:overwrite' if options.get('liveTelemetry',True) else 'status:none','priority:0','PII:-1','logfile:'+str(work/'console.log'),'config',str(config)]
     command=[str(exe),'skip-warnings','pause:-2','colors:0','console:linux-vterm','status:overwrite' if options.get('liveTelemetry',True) else 'status:none','priority:0','PII:-1',
-             'logfile:'+str(work/'console.log'),'custom','pi',f'-dec:{count}','-hex:0','-od:1','-C:0','-verify:1','-mode:'+plan['mode']]
+             'logfile:'+str(work/'console.log'),'custom',CONSTANTS[constant]['native'],f'-dec:{count}','-hex:0','-od:1','-C:0','-verify:1','-mode:'+plan['mode']]
     if options.get('tuningProfile'):
         if options['tuningProfile'] not in ('Kurumi','SKL 6820HK (NT)'):raise ValueError('Unsupported native tuning profile')
         command.insert(1,'profile:'+options['tuningProfile'])
@@ -121,7 +140,7 @@ def run(request_path):
             time.sleep(.05)
         if result['status']!='completed':
             log=(work/'console.log').read_text(errors='replace') if (work/'console.log').exists() else ''
-            if 'Spot Check: Good through' in log and 'Total Computation Time:' in log:result={'status':'completed'}
+            if native_verified(log,options.get('constant','pi'),proc.poll()):result={'status':'completed'}
             else:raise RuntimeError('Native computation did not verify its output. '+log[-500:])
     except Exception as error:result={'status':'cancelled' if isinstance(error,InterruptedError) else 'timed_out' if isinstance(error,TimeoutError) else 'failed','error':str(error)}
     finally:
