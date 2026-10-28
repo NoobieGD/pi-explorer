@@ -1,8 +1,14 @@
 @echo off
-cd /d "%~dp0"
-if not exist ".venv\Scripts\pythonw.exe" (
-  echo Run Setup Pi Explorer.cmd first. Python 3.12 is required.
-  pause
-  exit /b 1
-)
-start "Pi Explorer" /b "%~dp0.venv\Scripts\pythonw.exe" "%~dp0server.py"
+setlocal
+pushd "%~dp0"
+if errorlevel 1 goto path_error
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\source_launcher.ps1" -Action start
+set "launcher_result=%errorlevel%"
+popd
+if not "%launcher_result%"=="0" echo Pi Explorer failed. Read the error above.
+pause
+exit /b %launcher_result%
+:path_error
+echo Cannot open the app folder. Extract the complete ZIP to a writable folder first.
+pause
+exit /b 1

@@ -3,8 +3,88 @@
   "files": [
     {
       "file": ".gitignore",
-      "bytes": 699,
-      "sha256": "7bbd641c2e741aeb37921827df21039e9ee512ea1514516ca61480e4c1006828"
+      "bytes": 719,
+      "sha256": "59d57ddfe7f929d3b3a7cedc33796766d84eb64aaea0745efc3ebd8bd3729c80"
+    },
+    {
+      "file": "Benchmark 1 Billion.cmd",
+      "bytes": 449,
+      "sha256": "0cecb75aa240ed763147a434d0f9fb4ec8c7fbe19523280511d1debf735f0bb2"
+    },
+    {
+      "file": "Benchmark Scanning.cmd",
+      "bytes": 446,
+      "sha256": "25ef8e458c91a6ae9967f3168e1c6e1a4b184299eeeb2963068b813d4616a5c4"
+    },
+    {
+      "file": "HTML Version/OFL.txt",
+      "bytes": 4399,
+      "sha256": "a76abf002c49097d146e86740a3105a5d00450b1592e820a1109a8c5680cd697"
+    },
+    {
+      "file": "HTML Version/READ ME.txt",
+      "bytes": 1944,
+      "sha256": "d38b6115f1d3a0eee2ba58b102a5ed5afdd2f2da40d7928a575d065b428d4fda"
+    },
+    {
+      "file": "HTML Version/index.html",
+      "bytes": 5257349,
+      "sha256": "1300756aff473efa265419366f00245f519a2f726cf1205a3c09cb2191b551cd"
+    },
+    {
+      "file": "LAUNCHER-FIX.md",
+      "bytes": 1532,
+      "sha256": "e76e7ef0bf7323620eeba4ce78192ac290dea7cb7f003f8591afe16e4dcaa20c"
+    },
+    {
+      "file": "LOW-DISK-MODE.md",
+      "bytes": 4208,
+      "sha256": "852765441fb8446a6c1568392706d8683c2065529a3d7bea52cd452a0f218c94"
+    },
+    {
+      "file": "MULTI-CONSTANTS.md",
+      "bytes": 6146,
+      "sha256": "2935977e8b66de8e69c12d40cc0a53fc8c6ef9bb2bad84ee2b90cbf13fc43648"
+    },
+    {
+      "file": "README.md",
+      "bytes": 5424,
+      "sha256": "ce69b10a3eb4f0032beb241ac82f6a5b0c7667df531f689d55c22965204e1ade"
+    },
+    {
+      "file": "README.txt",
+      "bytes": 22190,
+      "sha256": "0b319e2a0781163e31df0f5c8450c4fd39470bd4d7fe0808d47dca8a92ad3b6f"
+    },
+    {
+      "file": "Run tests.cmd",
+      "bytes": 446,
+      "sha256": "6390bba60d6604df3d060f13a1fa3c3a5e8dd68e47b32b12245d8f26a6c51e70"
+    },
+    {
+      "file": "Setup Pi Explorer.cmd",
+      "bytes": 447,
+      "sha256": "2f3d04505e146d705561e1e443d21082625a4b65f85d1cfbc9306ff443a42f2a"
+    },
+    {
+      "file": "Start Pi Explorer.cmd",
+      "bytes": 447,
+      "sha256": "d79856b42bfd24317372ffe2468c4434f1dcf01382b165244edea2243fc1c66a"
+    },
+    {
+      "file": "Start Pi Explorer.vbs",
+      "bytes": 293,
+      "sha256": "8c5005f2277b0810bd88d1857dcb6e0d4809fb898250689551b04935f17adb5d"
+    },
+    {
+      "file": "TACHUSPI.txt",
+      "bytes": 2639,
+      "sha256": "5d23d440df43bb16539598a9dc5193523452046cb7fba5d44ae0952b16f29977"
+    },
+    {
+      "file": "Tune for This PC.cmd",
+      "bytes": 446,
+      "sha256": "c38c0f5c189d6dfe1a67660123b222ae5b8dd07b8ba7fac07a95315f44ed0401"
     },
     {
       "file": "app/app.js",
@@ -82,21 +162,6 @@
       "sha256": "56a9f745f6fe989e41ce5843ca8d72c545ecff5a3007cf3319f30dac20a56411"
     },
     {
-      "file": "Benchmark 1 Billion.cmd",
-      "bytes": 95,
-      "sha256": "b7339177147820eab7467a3036159d8276ba51111777defc654f7e29fe64cf0c"
-    },
-    {
-      "file": "Benchmark Scanning.cmd",
-      "bytes": 92,
-      "sha256": "1df3022e5976ddf14b6791cfd9f1a0c1cb5a711400be4d2350bf90617134b550"
-    },
-    {
-      "file": "benchmarks/billion.py",
-      "bytes": 3567,
-      "sha256": "654d242882347923d8488be51a22995b01f13a8e6628191fbf1637d531226dee"
-    },
-    {
       "file": "benchmarks/BLOCKS-AND-LOD.txt",
       "bytes": 1989,
       "sha256": "0d41686bc8378f7baab5f26d1fc582f88612ec8b27a23ca68eb5c9b28fdca012"
@@ -105,11 +170,6 @@
       "file": "benchmarks/FASTEST-RESULTS.txt",
       "bytes": 3287,
       "sha256": "8d7bdd732764dd558c0c6e1265e8f68d9531f28be85df755a3eb4f6be14fde2f"
-    },
-    {
-      "file": "benchmarks/irrational-constants-2026-10-28.json",
-      "bytes": 1976,
-      "sha256": "56d07c515f3a0b496da03e8a8df1c9f008be6ea42d85a5c5907c03542e61dd76"
     },
     {
       "file": "benchmarks/LIVE-PROGRESS.txt",
@@ -122,14 +182,24 @@
       "sha256": "629932ec33e34743e3aff5442b082eb5a822b0a923e00a19a39be7f40e83aeee"
     },
     {
-      "file": "benchmarks/run_performance.py",
-      "bytes": 3040,
-      "sha256": "63ab1b0b0a8866d172d7a37e87b16ebf3625f175213e90c1694869bdb99794c0"
-    },
-    {
       "file": "benchmarks/SCAN-RESULTS.txt",
       "bytes": 3314,
       "sha256": "bd9d7eba3a9a4d68e01b12712d639be8caf8192ac7fc238197c2c8882217a57e"
+    },
+    {
+      "file": "benchmarks/billion.py",
+      "bytes": 3567,
+      "sha256": "654d242882347923d8488be51a22995b01f13a8e6628191fbf1637d531226dee"
+    },
+    {
+      "file": "benchmarks/irrational-constants-2026-10-28.json",
+      "bytes": 1976,
+      "sha256": "56d07c515f3a0b496da03e8a8df1c9f008be6ea42d85a5c5907c03542e61dd76"
+    },
+    {
+      "file": "benchmarks/run_performance.py",
+      "bytes": 3040,
+      "sha256": "63ab1b0b0a8866d172d7a37e87b16ebf3625f175213e90c1694869bdb99794c0"
     },
     {
       "file": "benchmarks/scan_speed.py",
@@ -172,39 +242,14 @@
       "sha256": "fb308d098cb6212f706c69d36814bfb0a06607038570bdd9e9c28c2b7fdb6800"
     },
     {
-      "file": "HTML Version/index.html",
-      "bytes": 5257349,
-      "sha256": "1300756aff473efa265419366f00245f519a2f726cf1205a3c09cb2191b551cd"
-    },
-    {
-      "file": "HTML Version/OFL.txt",
-      "bytes": 4399,
-      "sha256": "a76abf002c49097d146e86740a3105a5d00450b1592e820a1109a8c5680cd697"
-    },
-    {
-      "file": "HTML Version/READ ME.txt",
-      "bytes": 1944,
-      "sha256": "d38b6115f1d3a0eee2ba58b102a5ed5afdd2f2da40d7928a575d065b428d4fda"
-    },
-    {
       "file": "live_progress.py",
       "bytes": 8453,
       "sha256": "d46a47f719003ec719079f581cc7e40ce9fd1a6c64fdb33d42dde5ccb3ed333a"
     },
     {
-      "file": "LOW-DISK-MODE.md",
-      "bytes": 4208,
-      "sha256": "852765441fb8446a6c1568392706d8683c2065529a3d7bea52cd452a0f218c94"
-    },
-    {
       "file": "mpt_store.py",
       "bytes": 2723,
       "sha256": "b73b449d4e4aac8c9e5574eccd961c0d1f866fceff6094b02a89ba68b2e622cb"
-    },
-    {
-      "file": "MULTI-CONSTANTS.md",
-      "bytes": 6146,
-      "sha256": "2935977e8b66de8e69c12d40cc0a53fc8c6ef9bb2bad84ee2b90cbf13fc43648"
     },
     {
       "file": "native/LICENSE.txt",
@@ -232,29 +277,9 @@
       "sha256": "38d5bb0fba83d711274036656fd72227c1e138e6f60739ac892c7e27ca9e35b9"
     },
     {
-      "file": "README.md",
-      "bytes": 5105,
-      "sha256": "b7081c33b214e74c6fa5ff7823f1949bef839a7cefc2a571d33a16091854e987"
-    },
-    {
-      "file": "README.txt",
-      "bytes": 22190,
-      "sha256": "0b319e2a0781163e31df0f5c8450c4fd39470bd4d7fe0808d47dca8a92ad3b6f"
-    },
-    {
       "file": "requirements.txt",
       "bytes": 28,
       "sha256": "a0ac1f2ad72bfacbdd9757f770bcaf4d4c835648be40ce91bbfc3885692c4b71"
-    },
-    {
-      "file": "research/benchmark_compact.py",
-      "bytes": 2469,
-      "sha256": "9986e990aaa9f11627e2e409f3a8fcf5bff117ceb9aed707d976d989858f1fc2"
-    },
-    {
-      "file": "research/compact_engine.py",
-      "bytes": 5379,
-      "sha256": "24431e084ab7c5d1afead4cbfea1b6e88658d920ed704d77577d29891afadac1"
     },
     {
       "file": "research/RESEARCH.txt",
@@ -267,34 +292,24 @@
       "sha256": "dba26f5f992d41913a82a31f154acdbde323c682f0cda7e47dbc2e5d9205071d"
     },
     {
+      "file": "research/benchmark_compact.py",
+      "bytes": 2469,
+      "sha256": "9986e990aaa9f11627e2e409f3a8fcf5bff117ceb9aed707d976d989858f1fc2"
+    },
+    {
+      "file": "research/compact_engine.py",
+      "bytes": 5379,
+      "sha256": "24431e084ab7c5d1afead4cbfea1b6e88658d920ed704d77577d29891afadac1"
+    },
+    {
       "file": "resource_plan.py",
       "bytes": 7295,
       "sha256": "50d750873afeb007bd1e7f8d8f5e8b632af38ac59f3533ac19127c02227ed422"
     },
     {
-      "file": "Run tests.cmd",
-      "bytes": 99,
-      "sha256": "362dd45af389189473b9866b180e9e92ec34c876d6637feadc3c8aa9f9a2b7fa"
-    },
-    {
       "file": "server.py",
       "bytes": 25846,
       "sha256": "b6ff2a26740f1bccb2397990d9e9e0d6e5fa7a48b06007c40f8958ae95a6ff81"
-    },
-    {
-      "file": "Setup Pi Explorer.cmd",
-      "bytes": 223,
-      "sha256": "9868c9441243c333c4cff83945e08913b07086123b57b6f53f56b74fb6d0b41d"
-    },
-    {
-      "file": "Start Pi Explorer.cmd",
-      "bytes": 235,
-      "sha256": "4112685b72f785516541479de6584ad74ff5e1465ef942f40feff053d733b280"
-    },
-    {
-      "file": "Start Pi Explorer.vbs",
-      "bytes": 398,
-      "sha256": "7ee21342b04b407ced11e796a3230df1652bf947e47628cd6df10dc291b896f2"
     },
     {
       "file": "storage.py",
@@ -310,11 +325,6 @@
       "file": "tachuspi.py",
       "bytes": 8818,
       "sha256": "a62f8ba44ec65e2a63da8ca09d2d62e2000ccdab829fad68566a0143d8e7508a"
-    },
-    {
-      "file": "TACHUSPI.txt",
-      "bytes": 2639,
-      "sha256": "5d23d440df43bb16539598a9dc5193523452046cb7fba5d44ae0952b16f29977"
     },
     {
       "file": "tests/client-session.test.cjs",
@@ -452,6 +462,11 @@
       "sha256": "1ec2ea6ce47fa88deb6352d8ceab80b9663055ca4ef836575e845a250ad613d5"
     },
     {
+      "file": "tools/source_launcher.ps1",
+      "bytes": 4328,
+      "sha256": "7656c4116d8c36d0e71b5b35b7bf56de75a6b72407ab6e7886c0bc6700d9cbf4"
+    },
+    {
       "file": "tools/upgrade_viewport.py",
       "bytes": 3094,
       "sha256": "ae98ab7dbd6438e4eb6c46b8bf8227a42704ca0df2a63a08fc60efc796f5a4f1"
@@ -492,11 +507,6 @@
       "sha256": "5c61ac348409608903518e26fa34c58b88670050dcbc488245714f60122bb1ad"
     },
     {
-      "file": "Tune for This PC.cmd",
-      "bytes": 99,
-      "sha256": "a82f15c0d58389b5d7f0fdef03ede5eea194f26b4061fad5d4dec5862d02d690"
-    },
-    {
       "file": "vendor/ycruncher-reduced-template.cfg",
       "bytes": 2350,
       "sha256": "5d8d35f9f9fc8b94dfc0e900f5875a1623c8c7a74c1f3e8d3e8c624f62455d2a"
@@ -513,5 +523,6 @@
     }
   ],
   "excludedDataAndInstalledRuntimes": true,
-  "pythonSyntaxChecked": true
+  "pythonSyntaxChecked": true,
+  "launcherRevision": "2026-10-28-python-detection"
 }
