@@ -14,3 +14,7 @@ Native errors stay visible in the app and `data/last-computation-error.log`. A s
 Tuning works without a private reference dataset. Scan benchmarking accepts existing TXT, YCD and MPT datasets. Run `python benchmarks/tune_native.py --check` for preflight without starting a calculation. The full tuner still runs its advertised benchmarks.
 
 See [native startup fixes and validation](NATIVE-STARTUP-FIX.md) and [supported constants](MULTI-CONSTANTS.md). Computed datasets, scratch files, virtual environments and third-party executables are excluded from this repository.
+
+## v1.1.3 search update
+
+See [the v1.1.3 changelog and measurements](RELEASE-v1.1.3.md) for the source-only search improvements and their limits.

@@ -1,0 +1,39 @@
+{
+  "version": "1.1.3",
+  "sourceDigits": 67108910,
+  "scope": "Synthetic 64 MiB TXT, warm OS cache, DLL disabled, full no-match scans; median of three. Not a large-dataset or cold-disk throughput claim.",
+  "runs": [
+    {
+      "mode": "digits",
+      "scheme": "mod26",
+      "beforeSeconds": 0.10153210000135005,
+      "afterSeconds": 0.027471700042951852,
+      "speedup": 3.6958797541690234,
+      "cachedSeconds": 0.0011468000011518598
+    },
+    {
+      "mode": "text",
+      "scheme": "ascii",
+      "beforeSeconds": 0.4361618999973871,
+      "afterSeconds": 0.03891040000598878,
+      "speedup": 11.209391317751978,
+      "cachedSeconds": 0.0007063000230118632
+    },
+    {
+      "mode": "text",
+      "scheme": "a1z26",
+      "beforeSeconds": 0.35932879999745637,
+      "afterSeconds": 0.04457000002730638,
+      "speedup": 8.062122498929975,
+      "cachedSeconds": 0.0009879000135697424
+    },
+    {
+      "mode": "text",
+      "scheme": "mod26",
+      "beforeSeconds": 0.3709301000344567,
+      "afterSeconds": 0.3641203999868594,
+      "speedup": 1.0187017811906256,
+      "cachedSeconds": 0.0011110000195913017
+    }
+  ]
+}

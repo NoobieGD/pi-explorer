@@ -1,10 +1,10 @@
 {
-  "version": "1.1.2",
+  "version": "1.1.3",
   "files": [
     {
       "file": ".gitignore",
-      "bytes": 719,
-      "sha256": "59d57ddfe7f929d3b3a7cedc33796766d84eb64aaea0745efc3ebd8bd3729c80"
+      "bytes": 754,
+      "sha256": "674146eabd827635bfe54a59cae72617b8085ea26861d56d7e71455228e1a6b9"
     },
     {
       "file": "Benchmark 1 Billion.cmd",
@@ -53,13 +53,23 @@
     },
     {
       "file": "README.md",
-      "bytes": 1505,
-      "sha256": "0e194f6dbf98e98585ed5a8fe44eccfdd57c78f97068b2f6a462411d67ae8898"
+      "bytes": 1656,
+      "sha256": "5777b0887f467c5a12bda93c1b41bfb129576d3250c396c9cb7ebe9724535091"
     },
     {
       "file": "README.txt",
       "bytes": 22190,
       "sha256": "0b319e2a0781163e31df0f5c8450c4fd39470bd4d7fe0808d47dca8a92ad3b6f"
+    },
+    {
+      "file": "RELEASE-v1.1.2.md",
+      "bytes": 1479,
+      "sha256": "fb5301c77bce2ff56d88cf2753a764527894eed2837ca4e10faad659de2d4c98"
+    },
+    {
+      "file": "RELEASE-v1.1.3.md",
+      "bytes": 1989,
+      "sha256": "e0957ab0db7b7a34b469105ec4e04b465d6488357e55cb1ef4ed37388b6daa49"
     },
     {
       "file": "Run tests.cmd",
@@ -212,6 +222,11 @@
       "sha256": "8ee07dfde8f5803de243c4362ad57fb253905cafdc71970de66277c84427a659"
     },
     {
+      "file": "benchmarks/search-v1.1.3.json",
+      "bytes": 1175,
+      "sha256": "e1996aa026740e302d046449601b8ecb379e69ffcc846ae5624ad04a485b3cc2"
+    },
+    {
       "file": "benchmarks/tune_native.py",
       "bytes": 6321,
       "sha256": "9002d2132d2a18b397acafc2f429f021dc9c72f8c49157d72ba65ce4b63ed8f5"
@@ -319,7 +334,7 @@
     {
       "file": "server.py",
       "bytes": 26138,
-      "sha256": "864b50c6efbddeb8ab8a735d92ae492f5e097059f0b2fb77b3123b57f9900550"
+      "sha256": "e42eadb7b1a3776d90a78d39063e3e547087130942270a214d9aa58845606034"
     },
     {
       "file": "storage.py",
@@ -328,8 +343,8 @@
     },
     {
       "file": "stream_search.py",
-      "bytes": 3237,
-      "sha256": "7e18fa8c424568d3e005d951f7b31bb9442007c6371ed61882a182fae5720074"
+      "bytes": 6885,
+      "sha256": "fa240f8f043785bc756c0e31f0d7ced5a2d0003fa765351f3c9582a5b037e183"
     },
     {
       "file": "tachuspi.py",
@@ -425,6 +440,11 @@
       "file": "tests/test_resources.py",
       "bytes": 6935,
       "sha256": "7c1ed83f36ba58141be704fd2644471843dc2983d1993dba12428bc18884ed44"
+    },
+    {
+      "file": "tests/test_search_113.py",
+      "bytes": 2348,
+      "sha256": "46a10cbf0ceca11f8c9cc06bdfb9e8237e9ca2e8fe0911edd59138140b44b62e"
     },
     {
       "file": "tests/test_tachuspi.py",
@@ -535,11 +555,6 @@
       "file": "ycd_store.py",
       "bytes": 5748,
       "sha256": "e8690538de814ee09cdcdd15ca3a44a1425923852d5f761fe5d9c86b709a16da"
-    },
-    {
-      "file": "RELEASE-v1.1.2.md",
-      "bytes": 1479,
-      "sha256": "fb5301c77bce2ff56d88cf2753a764527894eed2837ca4e10faad659de2d4c98"
     }
   ],
   "excludedDataAndInstalledRuntimes": true,
