@@ -6,8 +6,10 @@ sys.path.insert(0,str(ROOT))
 from storage import atomic_write
 from resource_plan import checked_job,cleanup,job_bytes,MIB,digit_count
 from live_progress import NativeProgress,ProcessSampler
-NATIVE=ROOT/'vendor/y-cruncher/y-cruncher v0.8.7.9547b/y-cruncher.exe'
+from native_install import find_native
+NATIVE=find_native()
 _owner_kernel=None
+STARTUP_TIMEOUT=45
 
 def native_verified(log,constant='pi',returncode=None):
     from constants import identify
@@ -99,7 +101,7 @@ def run(request_path):
     if plan['scratchLimitBytes']<0:raise ValueError('Invalid scratch limit')
     if plan['mode']=='disk':(work/'swap').mkdir(exist_ok=True)
     proc=None;result={'status':'failed'};started=time.monotonic();cpu_started=time.process_time();last_check=0
-    progress=NativeProgress(count);sampler=None;reader=None;last_publish=0;sequence=0;scratch_bytes=0;last_owner_check=0
+    progress=NativeProgress(count);sampler=None;reader=None;last_publish=0;first_output=threading.Event();sequence=0;scratch_bytes=0;last_owner_check=0
     def publish():
         nonlocal sequence
         sequence+=1;snapshot=progress.snapshot()
@@ -115,11 +117,14 @@ def run(request_path):
         proc=subprocess.Popen(command,cwd=work,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
         sampler=ProcessSampler(proc.pid) if options.get('liveTelemetry',True) else None
         def consume():
-            while data:=proc.stdout.read1(8192):progress.feed(data)
+            while data:=proc.stdout.read1(8192):
+                first_output.set();progress.feed(data)
             progress.finish()
         reader=threading.Thread(target=consume,daemon=True);reader.start()
         while proc.poll() is None:
             if (work/'cancel').exists():raise InterruptedError('Calculation cancelled')
+            if not first_output.is_set() and time.monotonic()-started>STARTUP_TIMEOUT:
+                raise TimeoutError('y-cruncher produced no startup output for 45 seconds. Check that the complete official distribution, including Binaries, is installed and that Windows is not waiting for approval. See stdout.log in this job folder.')
             if time.monotonic()-last_owner_check>.5:
                 last_owner_check=time.monotonic()
                 if not owner_alive(int(request['ownerPid'])):raise InterruptedError('Calculation cancelled')
@@ -137,15 +142,19 @@ def run(request_path):
                     if scratch_bytes>plan['scratchLimitBytes']+plan['outputBytes']:raise OSError('Stopped at the temporary disk-space limit')
             if time.monotonic()-last_publish>=.25:
                 last_publish=time.monotonic();publish()
+                if time.monotonic()-started<60:
+                    try:(work/'stdout.log').write_bytes(progress.transcript_tail())
+                    except OSError:pass
             time.sleep(.05)
         if result['status']!='completed':
             log=(work/'console.log').read_text(errors='replace') if (work/'console.log').exists() else ''
             if native_verified(log,options.get('constant','pi'),proc.poll()):result={'status':'completed'}
-            else:raise RuntimeError('Native computation did not verify its output. '+log[-500:])
+            else:raise RuntimeError('y-cruncher failed (exit '+str(proc.poll())+'). Check version compatibility and the full installation. '+(log or progress.transcript_tail().decode(errors='replace'))[-1800:])
     except Exception as error:result={'status':'cancelled' if isinstance(error,InterruptedError) else 'timed_out' if isinstance(error,TimeoutError) else 'failed','error':str(error)}
     finally:
         if proc and proc.poll() is None:stop_native(proc);proc.wait(timeout=10)
         if reader:reader.join(timeout=2)
+        if proc and proc.stdout and (not reader or not reader.is_alive()):proc.stdout.close()
         if sampler:sampler.close();sampler=None
         progress.set_phase('cleanup');publish()
         try:cleanup(work,ROOT/'data/native-output',remove_output=result['status']!='completed')
@@ -171,7 +180,7 @@ class ElevatedProcess:
 
 def launch(request_path,elevate=False):
     args=[str(ROOT/'native_runner.py'),str(request_path)]
-    if not elevate:return subprocess.Popen([sys.executable,*args],creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+    if not elevate:return subprocess.Popen([sys.executable,*args],env={**os.environ,'PYTHONUTF8':'1'},creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
     from ctypes import wintypes as w
     class SHELLEXECUTEINFO(ctypes.Structure):
         _fields_=[('cbSize',w.DWORD),('fMask',ctypes.c_ulong),('hwnd',w.HWND),('lpVerb',w.LPCWSTR),('lpFile',w.LPCWSTR),('lpParameters',w.LPCWSTR),('lpDirectory',w.LPCWSTR),('nShow',ctypes.c_int),('hInstApp',w.HINSTANCE),('lpIDList',ctypes.c_void_p),('lpClass',w.LPCWSTR),('hkeyClass',w.HKEY),('dwHotKey',w.DWORD),('hIcon',w.HANDLE),('hProcess',w.HANDLE)]

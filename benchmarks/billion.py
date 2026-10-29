@@ -10,8 +10,11 @@ def main():
     print('PI EXPLORER / 1,000,000,000 DIGITS / FRESH VERIFIED COMPUTATION',flush=True)
     print('Cached digits are never used as the benchmark result.',flush=True)
     record={'digits':1000000000,'cold':True,'targetSeconds':args.target_seconds,'verification':True}
+    (ROOT/'data').mkdir(exist_ok=True)
     try:
-        memory=engine.computation_plan(1000000000,ROOT/'data');record['memory']=memory
+        from native_install import require_native
+        require_native(engine.YCRUNCHER)
+        memory=engine.computation_plan(1000000000,ROOT/'data',method='ycruncher');record['memory']=memory
         print(f"Mode: {memory['mode']}. Available RAM: {memory['availableBytes']/2**30:.2f} GiB. Working budget: {memory['ramBudgetBytes']/2**20:.0f} MiB. Peak disk cap: {memory['peakDiskBytes']/2**30:.2f} GiB.",flush=True)
         if memory['requiresElevation']:print('Disk-backed blocks require the Windows administrator prompt for the calculator worker.',flush=True)
     except (MemoryError,OSError,ValueError) as error:

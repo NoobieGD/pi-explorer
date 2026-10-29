@@ -13,6 +13,14 @@ def job(count,label,options,deadline,memory=128,mode='disk'):
     atomic_write(work/'job.json',json.dumps({'owner':'Pi Explorer scratch v1','ownerPid':os.getpid()}));atomic_write(work/'request.json',json.dumps(item));return work
 
 def main():
+    from native_install import require_native
+    require_native(engine.YCRUNCHER)
+    (ROOT/'data').mkdir(exist_ok=True)
+    import argparse
+    parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
+    if args.check:
+        engine.computation_plan(25_000_000,ROOT/'data','ycruncher','disk',128)
+        print('Tuning preflight passed. No calculation started.');return
     candidates=[('legacy-HD',{'ioProfile':'legacy'}),('SSD-all',{'ioProfile':'ssd'})]
     # These sets come from this machine's native topology; no system affinity changes.
     if os.cpu_count()==8 and platform.processor().startswith('Intel64 Family 6 Model 186'):
@@ -39,7 +47,8 @@ def main():
     except KeyboardInterrupt:(batch/'cancel').touch();raise
     finally:
         if isinstance(process,native_runner.ElevatedProcess):process.close()
-    results=[];reference=DigitStore(ROOT/'data/pi-200000000.txt')
+    results=[];reference_path=ROOT/'data/pi-200000000.txt'
+    reference=DigitStore(reference_path) if reference_path.is_file() else engine.compute_constant(100000,'pi','mpfr').encode('ascii')
     try:
         for work in jobs:
             request=json.loads((work/'request.json').read_text());outcome=json.loads((work/'runner-result.json').read_text()) if (work/'runner-result.json').exists() else {'status':'not_run'}
@@ -55,7 +64,8 @@ def main():
                     row.update(comparisonDigits=compared,comparisonPassed=True)
                 finally:computed.close()
             resource_plan.cleanup(work,ROOT/'data/native-output',remove_output=True);row['scratchRemoved']=not (work/'swap').exists();results.append(row)
-    finally:reference.close()
+    finally:
+        if isinstance(reference,DigitStore):reference.close()
     medians={name:statistics.median(r['nativeSeconds'] for r in results if r['name']==name and r['status']=='completed') for name,_ in candidates if any(r['name']==name and r['status']=='completed' for r in results)}
     wall_medians={name:statistics.median(r['wallSeconds'] for r in results if r['name']==name and r['status']=='completed') for name in medians}
     supported={name:options for name,options in candidates if name.startswith('SSD') and name in medians}

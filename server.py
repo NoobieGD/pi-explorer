@@ -1,5 +1,5 @@
 """Local-only desktop application server. No cloud, accounts, or telemetry."""
-import sys, os, json, time, threading, subprocess, secrets, traceback, webbrowser
+import sys, os, json, time, threading, subprocess, secrets, traceback, webbrowser, hashlib
 from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -15,6 +15,7 @@ from constants import identify,CONSTANTS,infer
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'data'; DATA.mkdir(exist_ok=True)
+INSTALLATION_ID=hashlib.sha256(str(ROOT.resolve()).casefold().encode()).hexdigest()[:20]
 TOKEN=secrets.token_urlsafe(24)
 LOCK=threading.RLock()
 POOL=ThreadPoolExecutor(max_workers=2)
@@ -61,6 +62,12 @@ def compute_job(count,method,force=False,settings=None):
         with LOCK:
             if STATE.get('cancelled'):ACTIVE_CANCEL.touch()
         progress_stamp=None
+        stderr_tail=bytearray()
+        def drain_errors():
+            while chunk:=p.stderr.read(4096):
+                stderr_tail.extend(chunk)
+                if len(stderr_tail)>65536:del stderr_tail[:-65536]
+        error_reader=threading.Thread(target=drain_errors,daemon=True);error_reader.start()
         while p.poll() is None:
             f=progress_file
             try:
@@ -71,6 +78,8 @@ def compute_job(count,method,force=False,settings=None):
                     progress_stamp=stamp
             except (OSError,ValueError): pass
             time.sleep(.15)
+        error_reader.join(timeout=3)
+        p.stderr.close()
         code=p.returncode
         if code==0:
             path=engine.resource_plan.dataset_path(DATA,count,'mpt' if method=='tachuspi' else method=='ycruncher-low',constant=constant)
@@ -81,12 +90,13 @@ def compute_job(count,method,force=False,settings=None):
             load_file(path)
             with LOCK: STATE.update(busy=False,error=None,cacheHit=False,operationSeconds=STATE['seconds'])
         else:
-            err=p.stderr.read().decode(errors='replace')[-1000:]
+            err=stderr_tail.decode(errors='replace')[-4000:]
+            atomic_write(DATA/'last-computation-error.log',err or 'Computation failed without diagnostic output')
             with LOCK:
                 if STATE.get('cancelled'): STATE.update(busy=False,message='Computation cancelled',progress=0)
-                else: STATE.update(busy=False,error=err or 'Computation failed',message='Computation failed')
+                else: STATE.update(busy=False,error=err or 'Computation failed',message='Computation failed: '+(err.splitlines()[-1] if err else 'see data/last-computation-error.log'))
     except Exception as e:
-        with LOCK: STATE.update(busy=False,error=str(e),message='Computation failed')
+        with LOCK: STATE.update(busy=False,error=str(e),message='Computation failed: '+str(e))
     finally:
         with LOCK: PROCESS=None;ACTIVE_CANCEL=None
         for temporary in (locals().get('progress_file'),locals().get('request_file')):
@@ -218,7 +228,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(200);self.send_header('Content-Type','text/plain; charset=utf-8');self.send_header('Content-Disposition',f'attachment; filename="{getattr(store,'constant','pi')}-{len(store)}-decimal-places.txt"');self.send_header('Content-Length',str(len(store)+2));self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(str(getattr(store,'integerPart',3)).encode()+b'.')
                 for chunk in store.chunks():self.wfile.write(chunk)
                 return
-            if p=='/api/health': return self.send({'app':'Pi Explorer','version':'2.0.0','scanner':fast_search.features()})
+            if p=='/api/health': return self.send({'app':'Pi Explorer','version':'2.0.1','installationId':INSTALLATION_ID,'scanner':fast_search.features()})
             if p=='/favicon.ico': return self.send(b'',kind='image/x-icon')
             file=ROOT/'app'/('index.html' if p=='/' else p.lstrip('/'))
             if not file.resolve().is_relative_to((ROOT/'app').resolve()) or not file.is_file():
@@ -345,24 +355,19 @@ def main():
     import argparse
     parser=argparse.ArgumentParser();parser.add_argument('--no-browser',action='store_true');parser.add_argument('--port',type=int,default=31415)
     args=parser.parse_args()
-    try:
-        import urllib.request
-        existing=json.loads(urllib.request.urlopen(f'http://127.0.0.1:{args.port}/api/health',timeout=1).read())
-        if existing.get('app')=='Pi Explorer':
-            if existing.get('version')=='2.0.0':
-                if not args.no_browser: open_window(f'http://127.0.0.1:{args.port}')
+    import urllib.request,socket
+    for candidate in range(args.port,args.port+20):
+        try:
+            existing=json.loads(urllib.request.urlopen(f'http://127.0.0.1:{candidate}/api/health',timeout=.3).read())
+            if existing.get('installationId')==INSTALLATION_ID:
+                if not args.no_browser:open_window(f'http://127.0.0.1:{candidate}')
                 return
-            status=json.loads(urllib.request.urlopen(f'http://127.0.0.1:{args.port}/api/status',timeout=1).read())
-            if status.get('busy'):
-                if not args.no_browser:open_window(f'http://127.0.0.1:{args.port}')
-                return
-            request=urllib.request.Request(f'http://127.0.0.1:{args.port}/api/shutdown',data=b'{}',headers={'X-Pi-Token':status['token'],'Content-Type':'application/json'})
-            urllib.request.urlopen(request,timeout=2).read()
-            for _ in range(40):
-                time.sleep(.1)
-                try:urllib.request.urlopen(f'http://127.0.0.1:{args.port}/api/health',timeout=.2).close()
-                except Exception:break
-    except Exception: pass
+        except Exception:pass
+        with socket.socket() as probe:
+            try:probe.bind(('127.0.0.1',candidate))
+            except OSError:continue
+        args.port=candidate;break
+    else:raise RuntimeError('No free local app port. Close unused app instances and try again.')
     engine.resource_plan.cleanup_abandoned(DATA)
     files=[p for constant in CONSTANTS for suffix in ('txt','ycd','mpt') for p in DATA.glob(f'{constant}-*.{suffix}')]
     preferred=None

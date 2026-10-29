@@ -280,7 +280,7 @@ async function readStatus(initial=false){
   if(status.busy&&status.target)$('digitCount').value=status.target;
   $('footerStatus').textContent=window.PiLocalApi?'STANDALONE HTML · ALL DATA STAYS IN YOUR BROWSER':'COMPUTED LOCALLY · EXPLORED ENDLESSLY';
   $('computeBtn').classList.toggle('computing',status.busy);$('computeBtn').querySelector('span').textContent=status.busy?'Cancel computation':'Calculate '+NUMBERS[targetConstant()].symbol;
-  $('computeMessage').textContent=status.message;$('computeProgress').style.width=(status.progress*100)+'%';$('computeTime').textContent=status.busy&&status.elapsed!==undefined?computeLive.duration(status.elapsed):status.cacheHit?'cache · '+(status.operationSeconds*1000).toFixed(1)+'ms':status.seconds?computeLive.duration(status.seconds):'—';
+  $('computeMessage').textContent=status.error||status.message;$('computeProgress').style.width=(status.progress*100)+'%';$('computeTime').textContent=status.busy&&status.elapsed!==undefined?computeLive.duration(status.elapsed):status.cacheHit?'cache · '+(status.operationSeconds*1000).toFixed(1)+'ms':status.seconds?computeLive.duration(status.seconds):'—';
   computeLive.update(status);
   $('engineLabel').textContent=status.busy?status.telemetry?'COMPUTING · '+status.telemetry.phaseLabel.toUpperCase():'COMPUTING · '+Math.round(status.progress*100)+'% ESTIMATE':window.PiLocalApi?'BROWSER PRECISION ENGINE':'NATIVE PRECISION ENGINE';
   if(status.busy&&status.resourcePlan?.mode){$('resourcePlan').textContent=resourceText(status.resourcePlan);$('resourcePlan').classList.remove('error');}

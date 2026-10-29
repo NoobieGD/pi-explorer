@@ -72,6 +72,7 @@ class PackedTests(unittest.TestCase):
                 path.write_bytes(malformed)
                 with self.assertRaises(ValueError):DigitStore(path)
 
+    @patch.object(tachuspi,'EXE',type('NativeAvailable',(),{'is_file':lambda self:True})())
     def test_trial_plan_and_cache_lookup_keep_real_limits(self):
         p=tachuspi.plan(62831853071,'.',800*r.MIB,mode='disk',free=276*r.GIB)
         self.assertLess(p['peakDiskBytes']+p['diskReserveBytes'],276*r.GIB)

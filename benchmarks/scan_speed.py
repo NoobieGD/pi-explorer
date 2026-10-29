@@ -12,8 +12,12 @@ import fast_search,stream_search
 
 def run():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--quick',action='store_true');args=parser.parse_args()
-    path=max((ROOT/'data').glob('pi-*.txt'),key=lambda p:p.stat().st_size)
-    store=DigitStore(path);report={'digits':len(store),'file':str(path),'features':fast_search.features(),'runs':[]}
+    candidates=[p for suffix in ('txt','ycd','mpt') for p in (ROOT/'data').glob('pi-*.'+suffix)]
+    if not candidates:raise SystemExit('No existing pi dataset found. Compute or import digits first, then run Benchmark Scanning.cmd. This benchmark does not generate digits.')
+    path=max(candidates,key=lambda p:p.stat().st_size)
+    store=DigitStore(path)
+    if len(store)<100:store.close();raise SystemExit('Scanning benchmark needs at least 100 existing pi digits.')
+    report={'digits':len(store),'file':str(path),'features':fast_search.features(),'runs':[]}
     cases=[('digits','mod26',0,store[len(store)-81:len(store)-57]),
            ('text','mod26',0,store.window(store.total_units('text','mod26')-30,14,'text','mod26')[0]),
            ('text','ascii',1,b'PiExplorer!')]

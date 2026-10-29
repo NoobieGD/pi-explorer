@@ -52,6 +52,7 @@ class YcdTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'pi-1000.ycd';path.touch()
             self.assertEqual(r.dataset_path(directory,1000),path)
+    @patch.object(engine,'YCRUNCHER',type('NativeAvailable',(),{'exists':lambda self:True})())
     def test_auto_falls_back_to_reduced_packed_when_only_that_fits(self):
         with patch.object(engine,'available_memory',return_value=512*r.MIB),patch.object(r.shutil,'disk_usage',return_value=type('Disk',(),{'free':60*r.GIB})()):
             plan=engine.computation_plan(10000000000,'.','auto')

@@ -19,7 +19,8 @@ from constants import identify,CONSTANTS,compute as compute_constant
 
 MAX_DIGITS = None  # No application digit ceiling; preflight checks actual resources.
 ROOT=Path(__file__).resolve().parent
-YCRUNCHER=ROOT/'vendor/y-cruncher/y-cruncher v0.8.7.9547b/y-cruncher.exe'
+from native_install import find_native,require_native
+YCRUNCHER=find_native()
 PALETTE = ['#ef5350','#ff9e40','#f6d85d','#78cb70','#39bba0',
            '#42b9d5','#5486e8','#a67ce8','#e578b3','#e4e7ee']
 
@@ -243,7 +244,7 @@ def stop_native(proc):
 
 def compute_ycruncher_file(count,folder,progress=None,options=None,deadline=None,cancelled=None,on_native_job=None):
     """Run the official CPU-dispatching, multithreaded y-cruncher backend."""
-    if not YCRUNCHER.exists(): raise FileNotFoundError('Bundled y-cruncher is unavailable')
+    require_native(YCRUNCHER)
     folder=Path(folder).resolve()
     import secrets
     options={'priority':0,**(options or {})}

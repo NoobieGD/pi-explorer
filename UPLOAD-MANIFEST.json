@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "files": [
     {
       "file": ".gitignore",
@@ -47,9 +47,14 @@
       "sha256": "2935977e8b66de8e69c12d40cc0a53fc8c6ef9bb2bad84ee2b90cbf13fc43648"
     },
     {
+      "file": "NATIVE-STARTUP-FIX.md",
+      "bytes": 2082,
+      "sha256": "b355a38c881f248c1bdbd8e0f38c6aeec8f3850cd8e49bf49256499fe0b81823"
+    },
+    {
       "file": "README.md",
-      "bytes": 5424,
-      "sha256": "ce69b10a3eb4f0032beb241ac82f6a5b0c7667df531f689d55c22965204e1ade"
+      "bytes": 1505,
+      "sha256": "0e194f6dbf98e98585ed5a8fe44eccfdd57c78f97068b2f6a462411d67ae8898"
     },
     {
       "file": "README.txt",
@@ -88,8 +93,8 @@
     },
     {
       "file": "app/app.js",
-      "bytes": 44512,
-      "sha256": "3e92baabf8d43360b22b1435baa9bbd1750facb5599c9223ac152bd6085d6e27"
+      "bytes": 44526,
+      "sha256": "764913f20dded0e0268dfafa5a1c31350926e8ae42b18aeda8f5cdf16e3b6b1c"
     },
     {
       "file": "app/compute-live.js",
@@ -188,8 +193,8 @@
     },
     {
       "file": "benchmarks/billion.py",
-      "bytes": 3567,
-      "sha256": "654d242882347923d8488be51a22995b01f13a8e6628191fbf1637d531226dee"
+      "bytes": 3716,
+      "sha256": "e688570d21ea1358decb37294525493a10c57aa23e9e9dc9a0f247c588a58dc5"
     },
     {
       "file": "benchmarks/irrational-constants-2026-10-28.json",
@@ -203,13 +208,13 @@
     },
     {
       "file": "benchmarks/scan_speed.py",
-      "bytes": 2629,
-      "sha256": "929a6e1d9a43b6f5c8e5d4c29bf62ed721121805bbd4c2840cc20d83fd216228"
+      "bytes": 3002,
+      "sha256": "8ee07dfde8f5803de243c4362ad57fb253905cafdc71970de66277c84427a659"
     },
     {
       "file": "benchmarks/tune_native.py",
-      "bytes": 5723,
-      "sha256": "9ed767c5c1ed6007253e92feec01e2d926d29f4bceee7b90caedc605ad8b00d6"
+      "bytes": 6321,
+      "sha256": "9002d2132d2a18b397acafc2f429f021dc9c72f8c49157d72ba65ce4b63ed8f5"
     },
     {
       "file": "constants.py",
@@ -223,8 +228,8 @@
     },
     {
       "file": "engine.py",
-      "bytes": 24780,
-      "sha256": "894081d1a04d937295001aaec2cda6f7b24acc09e3b08d60d7be982405a6e059"
+      "bytes": 24722,
+      "sha256": "2ff8fcdce135389dd9bf087ba45a6db9f889e0de4f01f3d22933e312c88c41fc"
     },
     {
       "file": "examples/color-canvas.png",
@@ -262,9 +267,14 @@
       "sha256": "729cc35fb1b997a1b55ca3a74bc7fe2502342a2d0a04450fd96b56a66ec8adae"
     },
     {
+      "file": "native_install.py",
+      "bytes": 1201,
+      "sha256": "8984338f03d75945df7f717cb5058042ab19ab9ff8d1e3c71a7a4d12a725296b"
+    },
+    {
       "file": "native_runner.py",
-      "bytes": 13983,
-      "sha256": "64915138e900b9d341a73457faaa24a0f32dbb9fd4afd59195060e7a46a1afde"
+      "bytes": 14814,
+      "sha256": "28e9ffdb5a3278adcd082c31730d36107f19ba8cc0dd2f60e35d417442a59f38"
     },
     {
       "file": "portable/portable-bridge.js",
@@ -308,8 +318,8 @@
     },
     {
       "file": "server.py",
-      "bytes": 25846,
-      "sha256": "b6ff2a26740f1bccb2397990d9e9e0d6e5fa7a48b06007c40f8958ae95a6ff81"
+      "bytes": 26138,
+      "sha256": "38f9b0f914bb40a7ff2957b93e0637483a87790451702f6ddec3e8b1390815f5"
     },
     {
       "file": "storage.py",
@@ -402,6 +412,11 @@
       "sha256": "d58a5d2ef2baf32ac36740469275f499f7a13c0d0149d6f3bc25d4bf68b06c66"
     },
     {
+      "file": "tests/test_native_startup.py",
+      "bytes": 2875,
+      "sha256": "466f7f5947e79cafec38241d7a08f129562e41cc85b6661e7bc4031ecd6e2761"
+    },
+    {
       "file": "tests/test_recovery.py",
       "bytes": 2817,
       "sha256": "ac8e516a0fbe9386b489ae8796889bf74aa46dd31b79e7559114e1d29bb4aac3"
@@ -413,18 +428,18 @@
     },
     {
       "file": "tests/test_tachuspi.py",
-      "bytes": 7297,
-      "sha256": "81bcb94ee587abad5e47ce68426f7a1fc573c084e7a9512b970a1f7bc800d4a5"
+      "bytes": 7389,
+      "sha256": "7e73d02db70ae5cbf246e8eb55d8c218fc00a59021b96f4d3233e12bb95146c6"
     },
     {
       "file": "tests/test_uncapped.py",
-      "bytes": 2997,
-      "sha256": "d257f8db8aa3e5eee4f1356b7e55ff534edac006aa696f7fd2900618c9d200af"
+      "bytes": 3092,
+      "sha256": "4e672ba90de91aa4c01332ed90b6967c793151d27d95c17d8794460cd982ff70"
     },
     {
       "file": "tests/test_ycd_store.py",
-      "bytes": 4825,
-      "sha256": "6a8706f577bd911c42cc2dcebb01cba8cc7aa4f3678dbe3b77807333ca46a4be"
+      "bytes": 4920,
+      "sha256": "f4d36000d7b5aa08fb1907dfe3cb282bd285a1300f75295aacf70fad582a0572"
     },
     {
       "file": "tests/viewport.test.cjs",
@@ -524,5 +539,6 @@
   ],
   "excludedDataAndInstalledRuntimes": true,
   "pythonSyntaxChecked": true,
-  "launcherRevision": "2026-10-28-python-detection"
+  "launcherRevision": "2026-10-28-python-detection",
+  "nativeStartupRevision": "2026-10-29"
 }

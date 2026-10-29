@@ -24,6 +24,7 @@ class UncappedTests(unittest.TestCase):
         for value in (0,-1,True,1.5,'1e12','-100'):
             with self.assertRaises(ValueError):resources.digit_count(value)
         self.assertEqual(resources.estimate_ram(10**400),(10**400*485+99)//100+40*resources.MIB)
+    @patch.object(engine,'YCRUNCHER',type('NativeAvailable',(),{'exists':lambda self:True})())
     def test_api_preflight_and_rejected_large_post_do_not_start_worker(self):
         http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler)
         thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()

@@ -1,0 +1,44 @@
+# Calculated digits, caches, native scratch, checkpoints and local state
+/data/
+**/cache/
+**/scratch/
+**/native-output/
+**/hosting/
+**/__pycache__/
+*.py[cod]
+*.log
+*.dmp
+*.tmp
+*.part
+*.sqlite*
+*.ycd
+*.mpt
+*.swap
+# Python/dependency installs and third-party executable distributions
+/.venv/
+/venv/
+/runtime/
+/vendor/*
+!/vendor/ycruncher-ssd-template.cfg
+!/vendor/ycruncher-reduced-template.cfg
+/native/*.dll
+/native/*.so
+/native/*.lib
+/native/*.o
+/native/*.obj
+# Credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+.local-settings.json
+*.pem
+*.key
+*.pfx
+*.p12
+*.lnk
+*.zip
+/benchmarks/*.json
+
+!/benchmarks/irrational-constants-2026-10-28.json
+
+/.venv-backup-*/
