@@ -228,7 +228,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(200);self.send_header('Content-Type','text/plain; charset=utf-8');self.send_header('Content-Disposition',f'attachment; filename="{getattr(store,'constant','pi')}-{len(store)}-decimal-places.txt"');self.send_header('Content-Length',str(len(store)+2));self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(str(getattr(store,'integerPart',3)).encode()+b'.')
                 for chunk in store.chunks():self.wfile.write(chunk)
                 return
-            if p=='/api/health': return self.send({'app':'Pi Explorer','version':'2.0.1','installationId':INSTALLATION_ID,'scanner':fast_search.features()})
+            if p=='/api/health': return self.send({'app':'Pi Explorer','version':'1.1.2','installationId':INSTALLATION_ID,'scanner':fast_search.features()})
             if p=='/favicon.ico': return self.send(b'',kind='image/x-icon')
             file=ROOT/'app'/('index.html' if p=='/' else p.lstrip('/'))
             if not file.resolve().is_relative_to((ROOT/'app').resolve()) or not file.is_file():

@@ -1,5 +1,5 @@
 {
-  "version": "2.0.1",
+  "version": "1.1.2",
   "files": [
     {
       "file": ".gitignore",
@@ -319,7 +319,7 @@
     {
       "file": "server.py",
       "bytes": 26138,
-      "sha256": "38f9b0f914bb40a7ff2957b93e0637483a87790451702f6ddec3e8b1390815f5"
+      "sha256": "864b50c6efbddeb8ab8a735d92ae492f5e097059f0b2fb77b3123b57f9900550"
     },
     {
       "file": "storage.py",
@@ -535,6 +535,11 @@
       "file": "ycd_store.py",
       "bytes": 5748,
       "sha256": "e8690538de814ee09cdcdd15ca3a44a1425923852d5f761fe5d9c86b709a16da"
+    },
+    {
+      "file": "RELEASE-v1.1.2.md",
+      "bytes": 1479,
+      "sha256": "fb5301c77bce2ff56d88cf2753a764527894eed2837ca4e10faad659de2d4c98"
     }
   ],
   "excludedDataAndInstalledRuntimes": true,
